@@ -1,6 +1,6 @@
 # Envisaged - Dockerized Gource Visualizations
 #
-# VERSION 0.47
+# VERSION 0.1.0
 
 FROM jamesbrink/gource
 
