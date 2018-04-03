@@ -7,8 +7,7 @@ Built on top of the official [Alpine Linux 3.7][alpine linux image] image, exten
 ## About
 
 Painless data visualizations from git history showing a repositories development progression over time.  
-This container combines the awesome [Gource][gource] program witth the power of [FFmpeg][ffmpeg_home] and the h.264 codec to bring you  
-high resolution (4k at 60fps) video visualizations.
+This container combines the awesome [Gource][gource] program witth the power of [FFmpeg][ffmpeg_home] and the h.264 codec to bring you high resolution (4k at 60fps) video visualizations.
 
 This container is 100% headless, it does this by leveraging [Xvfb][xvfb] combined with the [Mesa 3d Gallium llvmpipe Driver][mesa].  
 Unlike other docker containers with Gource, this container does not eat up 100's of gigabtyes of disk space, nor does it require  
@@ -63,7 +62,7 @@ docker run --rm -p 80:80 --name envisaged \
 
 [gource]: https://github.com/acaudwell/Gource
 
-[ffmepg_home]: https://www.ffmpeg.org/
+[ffmpeg_home]: https://www.ffmpeg.org/
 
 [xvfb]: https://www.x.org/archive/X11R7.6/doc/man/man1/Xvfb.1.xhtml
 
