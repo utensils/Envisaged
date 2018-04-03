@@ -71,4 +71,7 @@ ENV XVFB_WHD="${XVFB_WHD:-640x480:16}" \
     GOURCE_MAX_USER_SPEED="500" \
     OVERLAY_FONT_COLOR="0f5ca8"
 
+# Expose port 80 to serve mp4 video over HTTP
+EXPOSE 80
+
 CMD ["/usr/local/bin/entrypoint.sh"]

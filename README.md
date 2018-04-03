@@ -7,9 +7,12 @@ Built on top of the official [Alpine Linux 3.7][alpine linux image] image, exten
 ## About
 
 Painless data visualizations from git history showing a repositories development progression over time.  
-This container combines the awesome [Gource][gource] program witth the power of [FFmpeg][ffmpeg_home] and the h.264 codec to bring you high resolution (4k at 60fps) video visualizations.
+This container combines the awesome [Gource][gource] program with the power of [FFmpeg][ffmpeg_home] and the h.264 codec to bring you high resolution (4k at 60fps) video visualizations.
 
-This container is 100% headless, it does this by leveraging [Xvfb][xvfb] combined with the [Mesa 3d Gallium llvmpipe Driver][mesa]. Unlike other docker containers with Gource, this container does not eat up 100's of gigabtyes of disk space, nor does it require an actual GPU to run. The process runs the Gource simulation concurrently with the FFmpeg encoding process using a set of named pipes. There is a slight trade off in performance, but this makes it very easy to run in any environment such as AWS without the need to provision large amounts of storage, or run any cleanup.
+This container is 100% headless, it does this by leveraging [Xvfb][xvfb] combined with the [Mesa 3d Gallium llvmpipe Driver][mesa]. Unlike other docker containers with Gource, this container does not eat up 100's of gigabtyes of disk space, nor does it require an actual GPU to run. The process runs the Gource simulation concurrently with the FFmpeg encoding process using a set of named pipes. There is a slight trade off in performance, but this makes it very easy to run in any environment such as AWS without the need to provision large amounts of storage, or run any cleanup.  
+
+
+This container is configurable through environment variables listed below. The generated video is delivered via HTTP.
 
 ## Example videos
 
@@ -26,7 +29,7 @@ This container is 100% headless, it does this by leveraging [Xvfb][xvfb] combine
 ## Usage Examples
 
 Run with the default settings which will create a visualization of the Docker GitHub repository.  
-Notice we are exposing port 80, the final video will be served at <http://localhost/>  
+Notice we are **exposing port 80**, the final video will be served at <http://localhost/>  
 
 ```shell
 docker run --rm -p 80:80 --name envisaged jamesbrink/envisaged
