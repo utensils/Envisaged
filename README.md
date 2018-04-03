@@ -11,6 +11,23 @@ This container combines the awesome [Gource][gource] program witth the power of 
 
 This container is 100% headless, it does this by leveraging [Xvfb][xvfb] combined with the [Mesa 3d Gallium llvmpipe Driver][mesa]. Unlike other docker containers with Gource, this container does not eat up 100's of gigabtyes of disk space, nor does it require an actual GPU to run. The process runs the Gource simulation concurrently with the FFmpeg encoding process using a set of named pipes. There is a slight trade off in performance, but this makes it very easy to run in any environment such as AWS without the need to provision large amounts of storage, or run any cleanup.
 
+## Example videos
+
+
+| GitHub Repo | YouTube Video |
+| ----------- | --------------|
+| [Elixir School][elixir-school]  | <a href="http://www.youtube.com/watch?feature=player_embedded&v=twpR-opLrZU" target="_blank"><img src="http://img.youtube.com/vi/twpR-opLrZU/0.jpg" alt="Elixir School Visualization" width="240" height="180" border="10" /></a>    |
+| [Kubernetes][kubernetes]  | <a href="http://www.youtube.com/watch?feature=player_embedded&v=UTwxiwF7Zac" target="_blank"><img src="http://img.youtube.com/vi/UTwxiwF7Zac/0.jpg" alt="Kubernetes Visualization" width="240" height="180" border="10" /></a>  |
+
+
+
+
+
+
+
+
+
+
 ## Usage Examples
 
 Run with the default settings which will create a visualization of the Docker GitHub repository.  
@@ -67,3 +84,7 @@ docker run --rm -p 80:80 --name envisaged \
 [ffmpeg]: https://trac.ffmpeg.org/wiki/Encode/H.264
 
 [jamesbrink/gource]: https://github.com/jamesbrink/docker-gource
+
+[elixir-school]: https://github.com/elixirschool/elixirschool
+
+[kubernetes]: https://github.com/kubernetes/kubernetes
