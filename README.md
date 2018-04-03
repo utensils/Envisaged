@@ -18,12 +18,7 @@ This container is 100% headless, it does this by leveraging [Xvfb][xvfb] combine
 | ----------- | --------------|
 | [Elixir School][elixir-school]  | <a href="http://www.youtube.com/watch?feature=player_embedded&v=twpR-opLrZU" target="_blank"><img src="http://img.youtube.com/vi/twpR-opLrZU/0.jpg" alt="Elixir School Visualization" width="240" height="180" border="10" /></a>    |
 | [Kubernetes][kubernetes]  | <a href="http://www.youtube.com/watch?feature=player_embedded&v=UTwxiwF7Zac" target="_blank"><img src="http://img.youtube.com/vi/UTwxiwF7Zac/0.jpg" alt="Kubernetes Visualization" width="240" height="180" border="10" /></a>  |
-
-
-
-
-
-
+| [Elixir Lang][elixir]   |  <a href="http://www.youtube.com/watch?feature=player_embedded&v=wl5uuvDK3ao" target="_blank"><img src="http://img.youtube.com/vi/wl5uuvDK3ao/0.jpg" alt="Elixir Lang Visualization" width="240" height="180" border="10" /></a> |
 
 
 
@@ -88,3 +83,5 @@ docker run --rm -p 80:80 --name envisaged \
 [elixir-school]: https://github.com/elixirschool/elixirschool
 
 [kubernetes]: https://github.com/kubernetes/kubernetes
+
+[elixir]: https://elixir-lang.org/
