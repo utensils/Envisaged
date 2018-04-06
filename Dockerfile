@@ -49,7 +49,7 @@ COPY . /visualization/
 WORKDIR /visualization
 
 # Set our environment variables.
-ENV XVFB_WHD="${XVFB_WHD:-640x480:16}" \
+ENV XVFB_WHD="3840x2160x24" \
     DISPLAY=":99" \
     H264_PRESET="ultrafast" \
     H264_CRF="23" \
