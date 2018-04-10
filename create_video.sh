@@ -1,10 +1,12 @@
 #!/bin/bash
 
 # Create our temp directory
+
 mkdir -p ./tmp
 # Create our named pipes.
 mkfifo ./tmp/gource.pipe
 mkfifo ./tmp/overlay.pipe
+
 
 # Start Gource for visualization.
 echo "Starting Gource for ${GIT_URL}, using title: ${GOURCE_TITLE}"
