@@ -1,6 +1,6 @@
 # Envisaged - Dockerized Gource Visualizations
 #
-# VERSION 0.1.0
+# VERSION 0.1.2
 
 FROM jamesbrink/gource
 
@@ -9,7 +9,7 @@ ARG BUILD_DATE
 
 LABEL maintainer="James Brink, brink.james@gmail.com" \
       decription="Envisaged - Dockerized Gource Visualizations." \
-      version="0.1.0" \
+      version="0.1.2" \
       org.label-schema.name="Envisaged" \
       org.label-schema.build-date=$BUILD_DATE \
       org.label-schema.vcs-ref=$VCS_REF \
@@ -51,9 +51,10 @@ WORKDIR /visualization
 # Set our environment variables.
 ENV XVFB_WHD="3840x2160x24" \
     DISPLAY=":99" \
-    H264_PRESET="ultrafast" \
+    H264_PRESET="medium" \
     H264_CRF="23" \
     H264_LEVEL="5.1" \
+    VIDEO_RESOLUTION="1080p" \
     GIT_URL="https://github.com/moby/moby" \
     LOGO_URL="" \
     GOURCE_SECONDS_PER_DAY="0.1" \
