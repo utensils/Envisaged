@@ -11,6 +11,9 @@ This container combines the awesome [Gource][gource] program with the power of [
 
 This container is 100% headless, it does this by leveraging [Xvfb][xvfb] combined with the [Mesa 3d Gallium llvmpipe Driver][mesa]. Unlike other docker containers with Gource, this container does not eat up 100's of gigabtyes of disk space, nor does it require an actual GPU to run. The process runs the Gource simulation concurrently with the FFmpeg encoding process using a set of named pipes. There is a slight trade off in performance, but this makes it very easy to run in any environment such as AWS without the need to provision large amounts of storage, or run any cleanup.  
 
+I use "template" scripts to generate specific looks, such as the one included in this container which is simply called **border** which places a frame around the Gource visualization and isolates the date and key on the outside of this border. If you would like to run the container with normal Gource output, simply pass `-e TEMPLATE=none` and it will use the `no_template.sh` script.
+
+
 
 This container is configurable through environment variables listed below. The generated video is delivered via HTTP.
 
@@ -55,6 +58,7 @@ docker run --rm -p 80:80 --name envisaged \
 | `H264_CRF`                 | `23`                             | The Constant Rate Factor (CRF) is the default quality for h.264 encoding. refer to [FFmpeg's wiki][ffmpeg]. |
 | `H264_LEVEL`               | `5.1`                            | h.264 encoding level. Refer to [FFmpeg's wiki][ffmpeg].                                                     |
 | `VIDEO_RESOLUTION`         | `1080p`                          | Output video resolution, options are **2160p, 1440p, 1080p, 720p**                                          |
+| `TEMPLATE`                 | `border`                         | This is the template script that will be run. Options are **border**, and **none**.                         |
 | `GOURCE_TITLE`             | `Software Development`           | Title to be displayed in the lower left hand corner of video.                                               |
 | `OVERLAY_FONT_COLOR`       | `0f5ca8`                         | Font color to be used on the overlay (Date only).                                                           |
 | `GOURCE_CAMERA_MODE`       | `overview`                       | Camera mode (overview, track).                                                                              |

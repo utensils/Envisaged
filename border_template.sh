@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Predefined resolutions and settings.
-if [[ "${VIDEO_RESOLUTION}" = "2160p" ]]; then
+if [[ "${VIDEO_RESOLUTION}" == "2160p" ]]; then
 	GOURCE_RES="3500x1940"
 	OVERLAY_RES="1920x1080"
 	GOURCE_PAD="3520:1960:3520:1960:#313133"
@@ -11,7 +11,7 @@ if [[ "${VIDEO_RESOLUTION}" = "2160p" ]]; then
 	DATE_PAD="3840:200:320:200:#202021"
 	OUTPUT_RES="3840:2160"
 	echo "Using 2160p settings. Output will be 3840x2160 at 60fps."
-elif [[ "${VIDEO_RESOLUTION}" = "1440p" ]]; then
+elif [[ "${VIDEO_RESOLUTION}" == "1440p" ]]; then
 	GOURCE_RES="2333x1293"
 	OVERLAY_RES="1920x1080"
 	GOURCE_PAD="2346:1306:2346:1306:#313133"
@@ -21,7 +21,7 @@ elif [[ "${VIDEO_RESOLUTION}" = "1440p" ]]; then
 	DATE_PAD="2560:134:214:134:#202021"
 	OUTPUT_RES="2560:1440"
 	echo "Using 1440p settings. Output will be 2560x1440 at 60fps."
-elif [[ "${VIDEO_RESOLUTION}" = "1080p" ]]; then
+elif [[ "${VIDEO_RESOLUTION}" == "1080p" ]]; then
 	GOURCE_RES="1750x970"
 	OVERLAY_RES="1920x1080"
 	GOURCE_PAD="1760:980:1760:980:#313133"
@@ -31,7 +31,7 @@ elif [[ "${VIDEO_RESOLUTION}" = "1080p" ]]; then
 	DATE_PAD="1920:100:160:100:#202021"
 	OUTPUT_RES="1920:1080"
 	echo "Using 1080p settings. Output will be 1920x1080 at 60fps."
-elif [[ "${VIDEO_RESOLUTION}" = "720p" ]]; then
+elif [[ "${VIDEO_RESOLUTION}" == "720p" ]]; then
 	GOURCE_RES="1116x646"
 	OVERLAY_RES="1920x1080"
 	GOURCE_PAD="1128:653:1128:653:#313133"
@@ -40,10 +40,10 @@ elif [[ "${VIDEO_RESOLUTION}" = "720p" ]]; then
 	DATE_CROP="1128:67:152:0"
 	DATE_PAD="1280:67:152:0:#202021"
 	OUTPUT_RES="1280:720"
-	echo "Using 720p settings. Output will be 1280x720 at 60fps."        
+	echo "Using 720p settings. Output will be 1280x720 at 60fps."
 fi
 
-if [[ "${INVERT_COLORS}" = "true" ]];then 
+if [[ "${INVERT_COLORS}" == "true" ]]; then
 	GOURCE_FILTERS="${GOURCE_FILTERS},lutrgb=r=negval:g=negval:b=negval"
 fi
 
@@ -118,6 +118,6 @@ echo "Removing temporary files."
 rm -rf ./tmp
 
 # Update html and link new video.
-filesize="$(du -sh /visualization/video/output.mp4 |cut -f 1)"
-printf "$(cat /visualization/html/completed.html)" $filesize > /visualization/html/index.html
+filesize="$(du -sh /visualization/video/output.mp4 | cut -f 1)"
+printf "$(cat /visualization/html/completed.html)" $filesize >/visualization/html/index.html
 ln -sf /visualization/video/output.mp4 /visualization/html/output.mp4

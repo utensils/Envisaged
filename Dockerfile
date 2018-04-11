@@ -73,7 +73,8 @@ ENV XVFB_WHD="3840x2160x24" \
     OVERLAY_FONT_COLOR="0f5ca8" \
     INVERT_COLORS="false" \
     GLOBAL_FILTERS="" \
-    GOURCE_FILTERS=""
+    GOURCE_FILTERS="" \
+    TEMPLATE="border"
 
 # Expose port 80 to serve mp4 video over HTTP
 EXPOSE 80
