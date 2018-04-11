@@ -43,6 +43,10 @@ elif [[ "${VIDEO_RESOLUTION}" = "720p" ]]; then
 	echo "Using 720p settings. Output will be 1280x720 at 60fps."        
 fi
 
+if [[ "${INVERT_COLORS}" = "true" ]];then 
+	GOURCE_FILTERS="${GOURCE_FILTERS},lutrgb=r=negval:g=negval:b=negval"
+fi
+
 # Create our temp directory
 mkdir -p ./tmp
 
@@ -100,13 +104,13 @@ mkdir -p ./video
 ffmpeg -y -r 60 -f image2pipe -probesize 100M -i ./tmp/gource.pipe \
 	-y -r 60 -f image2pipe -probesize 100M -i ./tmp/overlay.pipe \
 	${LOGO} \
-	-filter_complex "[0:v]pad=${GOURCE_PAD}[center];\
+	-filter_complex "[0:v]pad=${GOURCE_PAD}${GOURCE_FILTERS}[center];\
                          [1:v]scale=${OUTPUT_RES}[key_scale];\
                          [1:v]scale=${OUTPUT_RES}[date_scale];\
                          [key_scale]crop=${KEY_CROP},pad=${KEY_PAD}[key];\
                          [date_scale]crop=${DATE_CROP},pad=${DATE_PAD}[date];\
                          [key][center]hstack[with_key];\
-                         [date][with_key]vstack[with_date]${LOGO_FILTER_GRAPH}" ${FILTER_GRAPH_MAP} \
+                         [date][with_key]vstack[with_date]${LOGO_FILTER_GRAPH}${GLOBAL_FILTERS}" ${FILTER_GRAPH_MAP} \
 	-vcodec libx264 -level ${H264_LEVEL} -pix_fmt yuv420p -crf ${H264_CRF} -preset ${H264_PRESET} -bf 0 ./video/output.mp4
 
 # Remove our temporary files.

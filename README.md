@@ -69,7 +69,7 @@ docker run --rm -p 80:80 --name envisaged \
 | `GOURCE_DIR_DEPTH`         | `3`                              | Draw names of directories down to a specific depth in the tree.                                             |
 | `GOURCE_FILENAME_TIME`     | `2`                              | Duration to keep filenames on screen (>= 2.0).                                                              |
 | `GOURCE_MAX_USER_SPEED`    | `500`                            | Max speed users can travel per second.                                                                      |
-|                            |
+| `INVERT_COLORS`            | `false`                          | Inverts the colors on the visualization.                                                                    |
 
 [alpine linux image]: https://github.com/gliderlabs/docker-alpine
 
