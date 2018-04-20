@@ -32,16 +32,16 @@ This container is configurable through environment variables listed below. The g
 ## Usage Examples
 
 Run with the default settings which will create a visualization of the Docker GitHub repository.  
-Notice we are **exposing port 80**, the final video will be served at <http://localhost/>  
+Notice we are **exposing port 80**, the final video will be served at <http://localhost:8080/>  
 
 ```shell
-docker run --rm -p 80:80 --name envisaged jamesbrink/envisaged
+docker run --rm -p 8080:80 --name envisaged jamesbrink/envisaged
 ```
 
 The following example will run a visualization on the Kubernetes GitHub repository.
 
 ```shell
-docker run --rm -p 80:80 --name envisaged \
+docker run --rm -p 8080:80 --name envisaged \
        -e GIT_URL=https://github.com/kubernetes/kubernetes.git \
        -e LOGO_URL=https://raw.githubusercontent.com/kubernetes/kubernetes/master/logo/logo.png \
        -e GOURCE_TITLE="Kubernetes Development" \

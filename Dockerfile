@@ -1,15 +1,15 @@
 # Envisaged - Dockerized Gource Visualizations
 #
-# VERSION 0.1.2
+# VERSION 0.1.3
 
-FROM jamesbrink/gource
+FROM jamesbrink/opengl:18.0.1
 
 ARG VCS_REF
 ARG BUILD_DATE
 
 LABEL maintainer="James Brink, brink.james@gmail.com" \
       decription="Envisaged - Dockerized Gource Visualizations." \
-      version="0.1.2" \
+      version="0.1.3" \
       org.label-schema.name="Envisaged" \
       org.label-schema.build-date=$BUILD_DATE \
       org.label-schema.vcs-ref=$VCS_REF \
@@ -18,7 +18,7 @@ LABEL maintainer="James Brink, brink.james@gmail.com" \
 
 # Install all needed runtime dependencies.
 RUN set -xe; \
-    apk --update add --no-cache --virtual .runtime-deps bash lighttpd git wget imagemagick python py-pip; \
+    apk --update add --no-cache --virtual .runtime-deps bash lighttpd git wget imagemagick python py-pip llvm5-libs ffmpeg gource; \
     pip install --upgrade google-api-python-client progressbar2; \
     cd /var/tmp; \
     wget https://github.com/tokland/youtube-upload/archive/master.zip; \

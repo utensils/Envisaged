@@ -2,3 +2,4 @@
 hooks
 .travis
 Dockerfile
+.vscode
