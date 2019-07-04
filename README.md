@@ -2,7 +2,7 @@
 
 [![Docker Automated build](https://img.shields.io/docker/automated/utensils/envisaged.svg)](https://hub.docker.com/r/utensils/envisaged/) [![Docker Pulls](https://img.shields.io/docker/pulls/utensils/envisaged.svg)](https://hub.docker.com/r/utensils/envisaged/) [![Docker Stars](https://img.shields.io/docker/stars/utensils/envisaged.svg)](https://hub.docker.com/r/utensils/envisaged/) [![](https://images.microbadger.com/badges/image/utensils/envisaged.svg)](https://microbadger.com/images/utensils/envisaged "Get your own image badge on microbadger.com") [![](https://images.microbadger.com/badges/version/utensils/envisaged.svg)](https://microbadger.com/images/utensils/envisaged "Get your own version badge on microbadger.com")
 
-Built on top of the official [Alpine Linux 3.10][alpine linux image] image, extending from base image [`utensils/opengl:stable`][utensils/opengl].  
+Built on top of [`utensils/opengl:stable`][utensils/opengl] (Alpine 3.10). **No GPU is required**, this will run on any machine, such as a standard EC2 instance or any other VPS.  
 
 ## About
 
@@ -11,7 +11,7 @@ This container combines the awesome [Gource][gource] program with the power of [
 
 This container is 100% headless, it does this by leveraging [Xvfb][xvfb] combined with the [Mesa 3d Gallium llvmpipe Driver][mesa]. Unlike other docker containers with Gource, this container does not eat up 100's of gigabtyes of disk space, nor does it require an actual GPU to run. The process runs the Gource simulation concurrently with the FFmpeg encoding process using a set of named pipes. There is a slight trade off in performance, but this makes it very easy to run in any environment such as AWS without the need to provision large amounts of storage, or run any cleanup.  
 
-I use "template" scripts to generate specific looks, such as the one included in this container which is simply called **border** which places a frame around the Gource visualization and isolates the date and key on the outside of this border. If you would like to run the container with normal Gource output, simply pass `-e TEMPLATE=none` and it will use the `no_template.sh` script.
+Envisaged uses "template" scripts to generate specific looks, such as the one included in this container which is simply called **border** which places a frame around the Gource visualization and isolates the date and key on the outside of this border. If you would like to run the container with normal Gource output, simply pass `-e TEMPLATE=none` and it will use the `no_template.sh` script.
 
 
 
@@ -34,11 +34,8 @@ This container is configurable through environment variables listed below. The g
 Run with the default settings which will create a visualization of the Docker GitHub repository.  
 Notice we are **exposing port 80**, the final video will be served at <http://localhost:8080/>  
 
-```shell
-docker run --rm -p 8080:80 --name envisaged utensils/envisaged
-```
-
-The following example will run a visualization on the Kubernetes GitHub repository.
+The following example will run a visualization on the Kubernetes GitHub repository and include the Kubernetes logo
+in the video.
 
 ```shell
 docker run --rm -p 8080:80 --name envisaged \
@@ -47,6 +44,8 @@ docker run --rm -p 8080:80 --name envisaged \
        -e GOURCE_TITLE="Kubernetes Development" \
        utensils/envisaged
 ```
+
+Now open your browser to <http://localhost:8080/> and once the video is completed you will see the link with the video size.
 
 ## Environment Variables
 
