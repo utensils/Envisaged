@@ -4,7 +4,6 @@
 echo "Starting Xvfb"
 Xvfb :99 -ac -screen 0 $XVFB_WHD -nolisten tcp &
 xvfb_pid="$!"
-trap "echo 'Stopping Xvfb - pid: $xvfb_pid'; kill -SIGTERM $xvfb_pid" SIGINT SIGTERM
 
 # possible race condition waiting for Xvfb.
 sleep 5
@@ -50,7 +49,7 @@ fi
 cp /visualization/html/processing_gource.html /visualization/html/index.html
 lighttpd -f http.conf -D &
 httpd_pid="$!"
-trap "echo 'Stopping lighthttpd - pid: $xvfb_pid'; kill -SIGTERM $httpd_pid" SIGINT SIGTERM
+trap "echo 'Stopping proccesses PIDs: ($xvfb_pid, $http_pid)'; kill -SIGTERM $xvfb_pid $httpd_pid" SIGINT SIGTERM
 
 # Run the visualization
 if [[ "${TEMPLATE}" == "border" ]]; then

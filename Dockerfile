@@ -1,25 +1,25 @@
 # Envisaged - Dockerized Gource Visualizations
 #
-# VERSION 0.1.3
+# VERSION 0.1.4
 
-FROM jamesbrink/opengl:18.0.1
-
-ARG VCS_REF
-ARG BUILD_DATE
-
-LABEL maintainer="James Brink, brink.james@gmail.com" \
-      decription="Envisaged - Dockerized Gource Visualizations." \
-      version="0.1.3" \
-      org.label-schema.name="Envisaged" \
-      org.label-schema.build-date=$BUILD_DATE \
-      org.label-schema.vcs-ref=$VCS_REF \
-      org.label-schema.vcs-url="https://github.com/jamesbrink/Envisaged" \
-      org.label-schema.schema-version="1.0.0-rc1"
+FROM utensils/opengl:stable
 
 # Install all needed runtime dependencies.
 RUN set -xe; \
-    apk --update add --no-cache --virtual .runtime-deps bash lighttpd git wget imagemagick python py-pip llvm5-libs ffmpeg gource; \
-    pip install --upgrade google-api-python-client progressbar2; \
+    apk --update add --no-cache --virtual .runtime-deps \
+        bash \
+        ffmpeg \
+        git \
+        gource \
+        imagemagick \
+        lighttpd \
+        llvm7-libs \
+        py-pip \
+        python \
+        wget; \
+    pip install --upgrade \
+        google-api-python-client \
+        progressbar2; \
     cd /var/tmp; \
     wget https://github.com/tokland/youtube-upload/archive/master.zip; \
     unzip master.zip; \
@@ -47,6 +47,19 @@ COPY ./docker-entrypoint.sh /usr/local/bin/entrypoint.sh
 COPY . /visualization/
 
 WORKDIR /visualization
+
+# Labels and metadata.
+ARG VCS_REF
+ARG BUILD_DATE
+LABEL maintainer="James Brink, brink.james@gmail.com" \
+      org.label-schema.build-date="${BUILD_DATE}" \
+      org.label-schema.decription="Envisaged - Dockerized Gource Visualizations." \
+      org.label-schema.name="Envisaged" \
+      org.label-schema.schema-version="1.0.0-rc1" \
+      org.label-schema.vcs-ref="${VCS_REF}" \
+      org.label-schema.vcs-url="https://github.com/utensils/Envisaged" \
+      org.label-schema.vendor="Utensils" \
+      org.label-schema.version="0.1.4"
 
 # Set our environment variables.
 ENV XVFB_WHD="3840x2160x24" \

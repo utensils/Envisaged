@@ -1,8 +1,8 @@
 # Envisaged - Dockerized Gource Visualizations
 
-[![Build Status](https://travis-ci.org/jamesbrink/Envisaged.svg?branch=master)](https://travis-ci.org/jamesbrink/Envisaged) [![Docker Automated build](https://img.shields.io/docker/automated/jamesbrink/envisaged.svg)](https://hub.docker.com/r/jamesbrink/envisaged/) [![Docker Pulls](https://img.shields.io/docker/pulls/jamesbrink/envisaged.svg)](https://hub.docker.com/r/jamesbrink/envisaged/) [![Docker Stars](https://img.shields.io/docker/stars/jamesbrink/envisaged.svg)](https://hub.docker.com/r/jamesbrink/envisaged/) [![](https://images.microbadger.com/badges/image/jamesbrink/envisaged.svg)](https://microbadger.com/images/jamesbrink/envisaged "Get your own image badge on microbadger.com") [![](https://images.microbadger.com/badges/version/jamesbrink/envisaged.svg)](https://microbadger.com/images/jamesbrink/envisaged "Get your own version badge on microbadger.com")
+[![Docker Automated build](https://img.shields.io/docker/automated/utensils/envisaged.svg)](https://hub.docker.com/r/utensils/envisaged/) [![Docker Pulls](https://img.shields.io/docker/pulls/utensils/envisaged.svg)](https://hub.docker.com/r/utensils/envisaged/) [![Docker Stars](https://img.shields.io/docker/stars/utensils/envisaged.svg)](https://hub.docker.com/r/utensils/envisaged/) [![](https://images.microbadger.com/badges/image/utensils/envisaged.svg)](https://microbadger.com/images/utensils/envisaged "Get your own image badge on microbadger.com") [![](https://images.microbadger.com/badges/version/utensils/envisaged.svg)](https://microbadger.com/images/utensils/envisaged "Get your own version badge on microbadger.com")
 
-Built on top of the official [Alpine Linux 3.7][alpine linux image] image, extending from base image [`jamesbrink/gource`][jamesbrink/gource].  
+Built on top of the official [Alpine Linux 3.10][alpine linux image] image, extending from base image [`utensils/opengl:stable`][utensils/opengl].  
 
 ## About
 
@@ -35,7 +35,7 @@ Run with the default settings which will create a visualization of the Docker Gi
 Notice we are **exposing port 80**, the final video will be served at <http://localhost:8080/>  
 
 ```shell
-docker run --rm -p 8080:80 --name envisaged jamesbrink/envisaged
+docker run --rm -p 8080:80 --name envisaged utensils/envisaged
 ```
 
 The following example will run a visualization on the Kubernetes GitHub repository.
@@ -45,7 +45,7 @@ docker run --rm -p 8080:80 --name envisaged \
        -e GIT_URL=https://github.com/kubernetes/kubernetes.git \
        -e LOGO_URL=https://raw.githubusercontent.com/kubernetes/kubernetes/master/logo/logo.png \
        -e GOURCE_TITLE="Kubernetes Development" \
-       jamesbrink/envisaged
+       utensils/envisaged
 ```
 
 ## Environment Variables
@@ -87,7 +87,7 @@ docker run --rm -p 8080:80 --name envisaged \
 
 [ffmpeg]: https://trac.ffmpeg.org/wiki/Encode/H.264
 
-[jamesbrink/gource]: https://github.com/jamesbrink/docker-gource
+[utensils/opengl]: https://github.com/utensils/docker-opengl
 
 [elixir-school]: https://github.com/elixirschool/elixirschool
 
