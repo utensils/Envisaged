@@ -45,6 +45,15 @@ docker run --rm -p 8080:80 --name envisaged \
        utensils/envisaged
 ```
 
+Running a visualization against a local git repo.  
+
+```
+docker run --rm -p 8080:80 --name envisaged \
+       -v /path/to/your/repo:/visualization/git_repo:ro \
+       -e GOURCE_TITLE="Your Project Development" \
+       utensils/envisaged
+```
+
 Now open your browser to <http://localhost:8080/> and once the video is completed you will see the link with the video size.
 
 ## Environment Variables

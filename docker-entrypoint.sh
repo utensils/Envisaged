@@ -9,7 +9,11 @@ xvfb_pid="$!"
 sleep 5
 
 # Clone our git repo for the visualization.
-git clone ${GIT_URL} git_repo
+if [ ! -d /visualization/git_repo ]
+then
+	git clone ${GIT_URL} git_repo
+fi
+echo "Using volume mounted git repo"
 
 # Generate a gource log file.
 gource --output-custom-log development.log git_repo
