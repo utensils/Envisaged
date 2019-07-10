@@ -16,6 +16,7 @@ RUN set -xe; \
         llvm7-libs \
         py-pip \
         python \
+        subversion \
         wget; \
     pip install --upgrade \
         google-api-python-client \
