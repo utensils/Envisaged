@@ -54,6 +54,16 @@ docker run --rm -p 8080:80 --name envisaged \
        utensils/envisaged
 ```
 
+You can also combine multiple repositories into a single rendering by mounting a directory of repository
+directories onto `/visualization/git_repos` (the plural of `visualization/git_repo`).
+
+```
+docker run --rm -p 8080:80 --name envisaged \
+       -v /path/to/your/repos:/visualization/git_repos:ro \
+       -e GOURCE_TITLE="Your Project Development" \
+       utensils/envisaged
+```
+
 Optionally, you can have gource render avatars of the authors by mounting a volume with images of the authors.
 
 ```
