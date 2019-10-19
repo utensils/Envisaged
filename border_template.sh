@@ -63,6 +63,7 @@ gource --seconds-per-day ${GOURCE_SECONDS_PER_DAY} \
 	--title "${GOURCE_TITLE}" \
 	--background-colour ${GOURCE_BACKGROUND_COLOR} \
 	--font-colour ${GOURCE_TEXT_COLOR} \
+	--user-image-dir ${GOURCE_USER_IMAGE_DIR} \
 	--camera-mode ${GOURCE_CAMERA_MODE} \
 	--hide ${GOURCE_HIDE_ITEMS} \
 	--font-size ${GOURCE_FONT_SIZE} \

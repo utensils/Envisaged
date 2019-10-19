@@ -43,6 +43,7 @@ gource --seconds-per-day ${GOURCE_SECONDS_PER_DAY} \
 	--font-size ${GOURCE_FONT_SIZE} \
 	--dir-name-depth ${GOURCE_DIR_DEPTH} \
 	--filename-time ${GOURCE_FILENAME_TIME} \
+	--user-image-dir ${GOURCE_USER_IMAGE_DIR} \
 	--max-user-speed ${GOURCE_MAX_USER_SPEED} \
 	--bloom-multiplier 1.2 \
 	--${GOURCE_RES} \

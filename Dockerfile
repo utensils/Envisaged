@@ -63,32 +63,34 @@ LABEL maintainer="James Brink, brink.james@gmail.com" \
       org.label-schema.version="0.1.4"
 
 # Set our environment variables.
-ENV XVFB_WHD="3840x2160x24" \
+ENV \
     DISPLAY=":99" \
-    H264_PRESET="medium" \
-    H264_CRF="23" \
-    H264_LEVEL="5.1" \
-    VIDEO_RESOLUTION="1080p" \
     GIT_URL="https://github.com/moby/moby" \
-    LOGO_URL="" \
-    GOURCE_SECONDS_PER_DAY="0.1" \
-    GOURCE_TIME_SCALE="1.5" \
-    GOURCE_USER_SCALE="1.5" \
+    GLOBAL_FILTERS="" \
     GOURCE_AUTO_SKIP_SECONDS="0.5" \
-    GOURCE_TITLE="Software Development" \
     GOURCE_BACKGROUND_COLOR="000000" \
-    GOURCE_TEXT_COLOR="FFFFFF" \
     GOURCE_CAMERA_MODE="overview" \
-    GOURCE_HIDE_ITEMS="usernames,mouse,date,filenames" \
-    GOURCE_FONT_SIZE="48" \
     GOURCE_DIR_DEPTH="3" \
     GOURCE_FILENAME_TIME="2" \
-    GOURCE_MAX_USER_SPEED="500" \
-    OVERLAY_FONT_COLOR="0f5ca8" \
-    INVERT_COLORS="false" \
-    GLOBAL_FILTERS="" \
     GOURCE_FILTERS="" \
-    TEMPLATE="border"
+    GOURCE_FONT_SIZE="48" \
+    GOURCE_HIDE_ITEMS="usernames,mouse,date,filenames" \
+    GOURCE_MAX_USER_SPEED="500" \
+    GOURCE_SECONDS_PER_DAY="0.1" \
+    GOURCE_TEXT_COLOR="FFFFFF" \
+    GOURCE_TIME_SCALE="1.5" \
+    GOURCE_TITLE="Software Development" \
+    GOURCE_USER_IMAGE_DIR="/visualization/avatars" \
+    GOURCE_USER_SCALE="1.5" \
+    H264_CRF="23" \
+    H264_LEVEL="5.1" \
+    H264_PRESET="medium" \
+    INVERT_COLORS="false" \
+    LOGO_URL="" \
+    OVERLAY_FONT_COLOR="0f5ca8" \
+    TEMPLATE="border" \
+    VIDEO_RESOLUTION="1080p" \
+    XVFB_WHD="3840x2160x24"
 
 # Expose port 80 to serve mp4 video over HTTP
 EXPOSE 80
