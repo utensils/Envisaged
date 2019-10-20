@@ -61,7 +61,7 @@ directories onto `/visualization/git_repos` (the plural of `visualization/git_re
 docker run --rm -p 8080:80 --name envisaged \
        -v /path/to/your/repos:/visualization/git_repos:ro \
        -e GOURCE_TITLE="Your Project Development" \
-       utensils/envisaged
+       tkharris/envisaged
 ```
 
 Optionally, you can have gource render avatars of the authors by mounting a volume with images of the authors.
@@ -71,7 +71,7 @@ docker run --rm -p 8080:80 --name envisaged \
        -v /path/to/your/repo:/visualization/git_repo:ro \
        -v /path/to/your/avatars:/visualization/avatars:ro \
        -e GOURCE_TITLE="Your Project Development" \
-       utensils/envisaged
+       tkharris/envisaged
 ```
 
 The avatars in that directory must have filenames that match the author id, e.g. `utensils.gif`, etc.
