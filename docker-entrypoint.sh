@@ -8,15 +8,26 @@ xvfb_pid="$!"
 # possible race condition waiting for Xvfb.
 sleep 5
 
-# Clone our git repo for the visualization.
-if [ ! -d /visualization/git_repo ]
-then
-	git clone ${GIT_URL} git_repo
+if [ ! -d /visualization/git_repos ]; then
+	# Clone our git repo for the visualization.
+	if [ ! -d /visualization/git_repo ]; then
+		git clone ${GIT_URL} git_repo
+	fi
+	echo "Using volume mounted git repo"
+	gource --output-custom-log development.log git_repo
+else
+	FILES=
+	for D in /visualization/git_repos/*; do
+    	if [ -d "${D}" ]; then
+			NAME=${D##*/}
+			echo "Using volume mounted git repo $D as ${NAME}"
+        	gource --output-custom-log ${NAME}.log $D
+			sed -i -r "s#(.+)\|#\1|/$NAME#" ${NAME}.log
+        	FILES="$FILES ${NAME}.log"
+    	fi
+	done
+	cat ${FILES} | sort -n > development.log
 fi
-echo "Using volume mounted git repo"
-
-# Generate a gource log file.
-gource --output-custom-log development.log git_repo
 
 # Set proper env variables if we have a logo.
 if [ "${LOGO_URL}" != "" ]; then

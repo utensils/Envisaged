@@ -54,6 +54,28 @@ docker run --rm -p 8080:80 --name envisaged \
        utensils/envisaged
 ```
 
+You can also combine multiple repositories into a single rendering by mounting a directory of repository
+directories onto `/visualization/git_repos` (the plural of `visualization/git_repo`).
+
+```
+docker run --rm -p 8080:80 --name envisaged \
+       -v /path/to/your/repos:/visualization/git_repos:ro \
+       -e GOURCE_TITLE="Your Project Development" \
+       utensils/envisaged
+```
+
+Optionally, you can have gource render avatars of the authors by mounting a volume with images of the authors.
+
+```
+docker run --rm -p 8080:80 --name envisaged \
+       -v /path/to/your/repo:/visualization/git_repo:ro \
+       -v /path/to/your/avatars:/visualization/avatars:ro \
+       -e GOURCE_TITLE="Your Project Development" \
+       utensils/envisaged
+```
+
+The avatars in that directory must have filenames that match the author id, e.g. `utensils.gif`, etc.
+
 Now open your browser to <http://localhost:8080/> and once the video is completed you will see the link with the video size.
 
 ## Environment Variables
