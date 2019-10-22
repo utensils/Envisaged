@@ -32,6 +32,7 @@ RUN set -xe; \
     cd /visualization; \
     mkdir -p /visualization/video; \
     mkdir -p /visualization/html; \
+    mkdir -p /visualization/avatars; \
     cd /visualization/html; \
     wget "https://github.com/twbs/bootstrap/releases/download/v4.0.0/bootstrap-4.0.0-dist.zip"; \
     unzip bootstrap-4.0.0-dist.zip; \
