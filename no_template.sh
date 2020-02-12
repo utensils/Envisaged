@@ -3,16 +3,16 @@
 # Predefined resolutions and settings.
 if [[ "${VIDEO_RESOLUTION}" == "2160p" ]]; then
 	GOURCE_RES="3840x2160"
-	echo "Using 2160p settings. Output will be 3840x2160 at 60fps."
+	echo "Using 2160p settings. Output will be 3840x2160 at ${GOURCE_FPS}fps."
 elif [[ "${VIDEO_RESOLUTION}" == "1440p" ]]; then
 	GOURCE_RES="2560x1440"
-	echo "Using 1440p settings. Output will be 2560x1440 at 60fps."
+	echo "Using 1440p settings. Output will be 2560x1440 at ${GOURCE_FPS}fps."
 elif [[ "${VIDEO_RESOLUTION}" == "1080p" ]]; then
 	GOURCE_RES="1920x1080"
-	echo "Using 1080p settings. Output will be 1920x1080 at 60fps."
+	echo "Using 1080p settings. Output will be 1920x1080 at ${GOURCE_FPS}fps."
 elif [[ "${VIDEO_RESOLUTION}" == "720p" ]]; then
 	GOURCE_RES="1280x720"
-	echo "Using 720p settings. Output will be 1280x720 at 60fps."
+	echo "Using 720p settings. Output will be 1280x720 at ${GOURCE_FPS}fps."
 fi
 
 if [[ "${INVERT_COLORS}" == "true" ]]; then
@@ -49,29 +49,29 @@ gource --seconds-per-day ${GOURCE_SECONDS_PER_DAY} \
 	--${GOURCE_RES} \
 	--stop-at-end \
 	./development.log \
-	-r 60 \
+	-r ${GOURCE_FPS} \
 	-o - >./tmp/gource.pipe &
 
 # Start ffmpeg to merge the two video outputs.
 mkdir -p ./video
 if [[ "${LOGO_FILTER_GRAPH}" != "" ]]; then
 	if [[ "${GOURCE_FILTERS}" != "" ]]; then
-		ffmpeg -y -r 60 -f image2pipe -probesize 100M -i ./tmp/gource.pipe \
+		ffmpeg -y -r ${GOURCE_FPS} -f image2pipe -probesize 100M -i ./tmp/gource.pipe \
 			${LOGO} \
 			-filter_complex "[0:v]${GOURCE_FILTERS}[filtered];[filtered]${LOGO_FILTER_GRAPH}${GLOBAL_FILTERS}" ${FILTER_GRAPH_MAP} \
 			-vcodec libx264 -level ${H264_LEVEL} -pix_fmt yuv420p -crf ${H264_CRF} -preset ${H264_PRESET} -bf 0 ./video/output.mp4
 	else
-		ffmpeg -y -r 60 -f image2pipe -probesize 100M -i ./tmp/gource.pipe \
+		ffmpeg -y -r ${GOURCE_FPS} -f image2pipe -probesize 100M -i ./tmp/gource.pipe \
 			${LOGO} \
 			-filter_complex "[0:v]${LOGO_FILTER_GRAPH}${GLOBAL_FILTERS}" ${FILTER_GRAPH_MAP} \
 			-vcodec libx264 -level ${H264_LEVEL} -pix_fmt yuv420p -crf ${H264_CRF} -preset ${H264_PRESET} -bf 0 ./video/output.mp4
 	fi
 elif [[ "${GOURCE_FILTERS}" != "" ]]; then
-	ffmpeg -y -r 60 -f image2pipe -probesize 100M -i ./tmp/gource.pipe \
+	ffmpeg -y -r ${GOURCE_FPS} -f image2pipe -probesize 100M -i ./tmp/gource.pipe \
 		-filter_complex "${GOURCE_FILTERS}${GLOBAL_FILTERS}" ${FILTER_GRAPH_MAP} \
 		-vcodec libx264 -level ${H264_LEVEL} -pix_fmt yuv420p -crf ${H264_CRF} -preset ${H264_PRESET} -bf 0 ./video/output.mp4
 else
-	ffmpeg -y -r 60 -f image2pipe -probesize 100M -i ./tmp/gource.pipe \
+	ffmpeg -y -r ${GOURCE_FPS} -f image2pipe -probesize 100M -i ./tmp/gource.pipe \
 		-vcodec libx264 -level ${H264_LEVEL} -pix_fmt yuv420p -crf ${H264_CRF} -preset ${H264_PRESET} -bf 0 ./video/output.mp4
 fi
 

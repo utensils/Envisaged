@@ -91,7 +91,8 @@ ENV \
     OVERLAY_FONT_COLOR="0f5ca8" \
     TEMPLATE="border" \
     VIDEO_RESOLUTION="1080p" \
-    XVFB_WHD="3840x2160x24"
+    XVFB_WHD="3840x2160x24" \
+    GOURCE_FPS = "60"
 
 # Expose port 80 to serve mp4 video over HTTP
 EXPOSE 80
