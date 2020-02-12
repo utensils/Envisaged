@@ -88,6 +88,7 @@ Now open your browser to <http://localhost:8080/> and once the video is complete
 | `H264_CRF`                 | `23`                             | The Constant Rate Factor (CRF) is the default quality for h.264 encoding. refer to [FFmpeg's wiki][ffmpeg]. |
 | `H264_LEVEL`               | `5.1`                            | h.264 encoding level. Refer to [FFmpeg's wiki][ffmpeg].                                                     |
 | `VIDEO_RESOLUTION`         | `1080p`                          | Output video resolution, options are **2160p, 1440p, 1080p, 720p**                                          |
+| `GOURCE_FPS`         | `60`                          | Output video frame rate                                          |
 | `TEMPLATE`                 | `border`                         | This is the template script that will be run. Options are **border**, and **none**.                         |
 | `GOURCE_TITLE`             | `Software Development`           | Title to be displayed in the lower left hand corner of video.                                               |
 | `OVERLAY_FONT_COLOR`       | `0f5ca8`                         | Font color to be used on the overlay (Date only).                                                           |
