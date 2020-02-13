@@ -10,7 +10,7 @@ if [[ "${VIDEO_RESOLUTION}" == "2160p" ]]; then
 	DATE_CROP="3520:200:640:0"
 	DATE_PAD="3840:200:320:200:#202021"
 	OUTPUT_RES="3840:2160"
-	echo "Using 2160p settings. Output will be 3840x2160 at 60fps."
+	echo "Using 2160p settings. Output will be 3840x2160 at ${GOURCE_FPS}fps."
 elif [[ "${VIDEO_RESOLUTION}" == "1440p" ]]; then
 	GOURCE_RES="2333x1293"
 	OVERLAY_RES="1920x1080"
@@ -20,7 +20,7 @@ elif [[ "${VIDEO_RESOLUTION}" == "1440p" ]]; then
 	DATE_CROP="2346:134:426:0"
 	DATE_PAD="2560:134:214:134:#202021"
 	OUTPUT_RES="2560:1440"
-	echo "Using 1440p settings. Output will be 2560x1440 at 60fps."
+	echo "Using 1440p settings. Output will be 2560x1440 at ${GOURCE_FPS}fps."
 elif [[ "${VIDEO_RESOLUTION}" == "1080p" ]]; then
 	GOURCE_RES="1750x970"
 	OVERLAY_RES="1920x1080"
@@ -30,7 +30,7 @@ elif [[ "${VIDEO_RESOLUTION}" == "1080p" ]]; then
 	DATE_CROP="1760:100:320:0"
 	DATE_PAD="1920:100:160:100:#202021"
 	OUTPUT_RES="1920:1080"
-	echo "Using 1080p settings. Output will be 1920x1080 at 60fps."
+	echo "Using 1080p settings. Output will be 1920x1080 at ${GOURCE_FPS}fps."
 elif [[ "${VIDEO_RESOLUTION}" == "720p" ]]; then
 	GOURCE_RES="1116x646"
 	OVERLAY_RES="1920x1080"
@@ -40,7 +40,7 @@ elif [[ "${VIDEO_RESOLUTION}" == "720p" ]]; then
 	DATE_CROP="1128:67:152:0"
 	DATE_PAD="1280:67:152:0:#202021"
 	OUTPUT_RES="1280:720"
-	echo "Using 720p settings. Output will be 1280x720 at 60fps."
+	echo "Using 720p settings. Output will be 1280x720 at ${GOURCE_FPS}fps."
 fi
 
 if [[ "${INVERT_COLORS}" == "true" ]]; then
@@ -74,7 +74,7 @@ gource --seconds-per-day ${GOURCE_SECONDS_PER_DAY} \
 	--${GOURCE_RES} \
 	--stop-at-end \
 	./development.log \
-	-r 60 \
+	-r ${GOURCE_FPS} \
 	-o - >./tmp/gource.pipe &
 
 # Start Gource for the overlay elements.
@@ -96,14 +96,14 @@ gource --seconds-per-day ${GOURCE_SECONDS_PER_DAY} \
 	--filename-time 2 \
 	--max-user-speed 500 \
 	./development.log \
-	-r 60 \
+	-r ${GOURCE_FPS} \
 	-o - >./tmp/overlay.pipe &
 
 # Start ffmpeg to merge the two video outputs.
 echo "Combining videos."
 mkdir -p ./video
-ffmpeg -y -r 60 -f image2pipe -probesize 100M -i ./tmp/gource.pipe \
-	-y -r 60 -f image2pipe -probesize 100M -i ./tmp/overlay.pipe \
+ffmpeg -y -r ${GOURCE_FPS} -f image2pipe -probesize 100M -i ./tmp/gource.pipe \
+	-y -r ${GOURCE_FPS} -f image2pipe -probesize 100M -i ./tmp/overlay.pipe \
 	${LOGO} \
 	-filter_complex "[0:v]pad=${GOURCE_PAD}${GOURCE_FILTERS}[center];\
                          [1:v]scale=${OUTPUT_RES}[key_scale];\
