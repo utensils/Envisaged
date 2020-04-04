@@ -1,0 +1,39 @@
+---
+  resources:
+    - name: envisaged-git
+      type: git
+      icon: github-circle
+      source:
+        uri: https://github.com/utensils/Envisaged.git
+
+    - name: opengl-cache
+      type: docker-image
+      source:
+        repository: utensils/opengl
+        tag: stable
+  
+    - name: envisaged-image
+      type: docker-image
+      source:
+        email: ((docker-hub-email))
+        username: ((docker-hub-username))
+        password: ((docker-hub-password))
+        repository: utensils/envisaged
+  
+  jobs:
+    - name: build
+      public: true
+      plan:
+        - get: envisaged-git
+          trigger: true
+        - get: opengl-cache
+          params: {save: true}
+        - put: envisaged-image
+          params:
+            build: envisaged-git/
+            load_base: opengl-cache
+            tag_file: envisaged-git/VERSION
+            tag_as_latest: true
+            build_args:
+              cache: true
+  
