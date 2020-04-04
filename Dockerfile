@@ -1,6 +1,6 @@
 # Envisaged - Dockerized Gource Visualizations
 #
-# VERSION 0.1.4
+# VERSION 0.1.5
 
 FROM utensils/opengl:stable
 
@@ -61,7 +61,7 @@ LABEL maintainer="James Brink, brink.james@gmail.com" \
       org.label-schema.vcs-ref="${VCS_REF}" \
       org.label-schema.vcs-url="https://github.com/utensils/Envisaged" \
       org.label-schema.vendor="Utensils" \
-      org.label-schema.version="0.1.4"
+      org.label-schema.version="0.1.5"
 
 # Set our environment variables.
 ENV \
