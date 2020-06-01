@@ -1,8 +1,8 @@
 # Envisaged - Dockerized Gource Visualizations
 #
-# VERSION 0.1.5
-
-FROM utensils/opengl:stable
+# VERSION 0.1.6
+ARG BASE_IMAGE=utensils/opengl:20.0.6
+FROM ${BASE_IMAGE}
 
 # Install all needed runtime dependencies.
 RUN set -xe; \
@@ -13,7 +13,6 @@ RUN set -xe; \
         gource \
         imagemagick \
         lighttpd \
-        llvm7-libs \
         py-pip \
         python \
         subversion \
@@ -43,25 +42,26 @@ RUN set -xe; \
     mv jquery-3.3.1/dist/* /visualization/html/js/; \
     rm -rf 3.3.1;
 
-
-# Copy our assets
+# Copy our assets into image.
 COPY ./docker-entrypoint.sh /usr/local/bin/entrypoint.sh
 COPY . /visualization/
 
+# Set our working directory.
 WORKDIR /visualization
 
 # Labels and metadata.
 ARG VCS_REF
 ARG BUILD_DATE
-LABEL maintainer="James Brink, brink.james@gmail.com" \
-      org.label-schema.build-date="${BUILD_DATE}" \
-      org.label-schema.decription="Envisaged - Dockerized Gource Visualizations." \
-      org.label-schema.name="Envisaged" \
-      org.label-schema.schema-version="1.0.0-rc1" \
-      org.label-schema.vcs-ref="${VCS_REF}" \
-      org.label-schema.vcs-url="https://github.com/utensils/Envisaged" \
-      org.label-schema.vendor="Utensils" \
-      org.label-schema.version="0.1.5"
+ARG VERSION
+LABEL \
+    org.opencontainers.image.authors="James Brink <brink.james@gmail.com>" \
+    org.opencontainers.image.created="${BUILD_DATE}" \
+    org.opencontainers.image.description="Envisaged ${VERSION} - Dockerized Gource Visualizations." \
+    org.opencontainers.image.revision="${VCS_REF}" \
+    org.opencontainers.image.source="https://github.com/utensils/Envisaged" \
+    org.opencontainers.image.title="Envisaged ${VERSION}" \
+    org.opencontainers.image.vendor="Utensils" \
+    org.opencontainers.image.version="${VERSION}"
 
 # Set our environment variables.
 ENV \
@@ -94,7 +94,8 @@ ENV \
     XVFB_WHD="3840x2160x24" \
     GOURCE_FPS="60"
 
-# Expose port 80 to serve mp4 video over HTTP
+# Expose port 80 to serve mp4 video over HTTP.
 EXPOSE 80
 
+# Set our entrypoint.
 CMD ["/usr/local/bin/entrypoint.sh"]
