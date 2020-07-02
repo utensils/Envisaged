@@ -1,7 +1,7 @@
 # Envisaged - Dockerized Gource Visualizations
 #
-# VERSION 0.1.6
-ARG BASE_IMAGE=utensils/opengl:20.0.6
+# VERSION 0.1.7
+ARG BASE_IMAGE=utensils/opengl:stable
 FROM ${BASE_IMAGE}
 
 # Install all needed runtime dependencies.
@@ -13,18 +13,18 @@ RUN set -xe; \
         gource \
         imagemagick \
         lighttpd \
-        py-pip \
-        python \
+        py3-pip \
+        python3 \
         subversion \
         wget; \
-    pip install --upgrade \
+    pip3 install --upgrade \
         google-api-python-client \
         progressbar2; \
     cd /var/tmp; \
     wget https://github.com/tokland/youtube-upload/archive/master.zip; \
     unzip master.zip; \
     cd youtube-upload-master; \
-    python setup.py install; \
+    python3 setup.py install; \
     cd /var/tmp; \
     rm -rf youtube-upload-master; \
     mkdir -p /visualization; \
