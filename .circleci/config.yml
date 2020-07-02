@@ -32,6 +32,7 @@ jobs:
           command: |
             echo "$DOCKERHUB_PASS" | docker login --username "$DOCKERHUB_USERNAME" --password-stdin
             make
+            make push-readme
 
 workflows:
   version: 2
