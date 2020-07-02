@@ -32,3 +32,12 @@ jobs:
           command: |
             echo "$DOCKERHUB_PASS" | docker login --username "$DOCKERHUB_USERNAME" --password-stdin
             make
+
+workflows:
+  version: 2
+  build-and-push:
+    jobs:
+      - build:
+          filters:  # required since `deploy` has tag filters AND requires `build`
+            tags:
+              only: /.*/
