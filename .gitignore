@@ -21,3 +21,6 @@ Thumbs.db
 .pyarrow-cache/
 *.feather
 arrow/
+
+# Test directories
+git_repo/
