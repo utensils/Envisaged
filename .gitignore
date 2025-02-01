@@ -14,6 +14,7 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.log
+*.bak
 
 # Arrow files
 *.arrow
@@ -21,6 +22,35 @@ Thumbs.db
 .pyarrow-cache/
 *.feather
 arrow/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+.env
+.venv
+env/
+venv/
+ENV/
 
 # Test directories
 git_repo/__pycache__/
