@@ -23,11 +23,13 @@ if [[ "${INVERT_COLORS}" == "true" ]]; then
 	fi
 fi
 
-# Create our temp directory
-mkdir -p ./tmp
+# Use temp directory from environment or create one
+TMP_DIR="${TMPDIR:-./tmp}"
+VIDEO_DIR="${OUTPUT_DIR:-./video}"
 
-# Create our named pipes.
-mkfifo ./tmp/gource.pipe
+# Create our temp directory and named pipe
+mkdir -p "${TMP_DIR}/tmp"
+mkfifo "${TMP_DIR}/tmp/gource.pipe"
 
 # Start Gource for visualization.
 echo "Starting Gource for ${GIT_URL}, using title: ${GOURCE_TITLE}"
@@ -50,36 +52,34 @@ gource --seconds-per-day ${GOURCE_SECONDS_PER_DAY} \
 	--stop-at-end \
 	./development.log \
 	-r ${GOURCE_FPS} \
-	-o - >./tmp/gource.pipe &
+	-o - >"${TMP_DIR}/tmp/gource.pipe" &
 
 # Start ffmpeg to merge the two video outputs.
-mkdir -p ./video
+mkdir -p "${VIDEO_DIR}"
 if [[ "${LOGO_FILTER_GRAPH}" != "" ]]; then
 	if [[ "${GOURCE_FILTERS}" != "" ]]; then
-		ffmpeg -y -r ${GOURCE_FPS} -f image2pipe -probesize 100M -i ./tmp/gource.pipe \
+		ffmpeg -y -r ${GOURCE_FPS} -f image2pipe -probesize 100M -i "${TMP_DIR}/tmp/gource.pipe" \
 			${LOGO} \
 			-filter_complex "[0:v]${GOURCE_FILTERS}[filtered];[filtered]${LOGO_FILTER_GRAPH}${GLOBAL_FILTERS}" ${FILTER_GRAPH_MAP} \
-			-vcodec libx264 -level ${H264_LEVEL} -pix_fmt yuv420p -crf ${H264_CRF} -preset ${H264_PRESET} -bf 0 ./video/output.mp4
+			-vcodec libx264 -level ${H264_LEVEL} -pix_fmt yuv420p -crf ${H264_CRF} -preset ${H264_PRESET} -bf 0 "${VIDEO_DIR}/output.mp4"
 	else
-		ffmpeg -y -r ${GOURCE_FPS} -f image2pipe -probesize 100M -i ./tmp/gource.pipe \
+		ffmpeg -y -r ${GOURCE_FPS} -f image2pipe -probesize 100M -i "${TMP_DIR}/tmp/gource.pipe" \
 			${LOGO} \
 			-filter_complex "[0:v]${LOGO_FILTER_GRAPH}${GLOBAL_FILTERS}" ${FILTER_GRAPH_MAP} \
-			-vcodec libx264 -level ${H264_LEVEL} -pix_fmt yuv420p -crf ${H264_CRF} -preset ${H264_PRESET} -bf 0 ./video/output.mp4
+			-vcodec libx264 -level ${H264_LEVEL} -pix_fmt yuv420p -crf ${H264_CRF} -preset ${H264_PRESET} -bf 0 "${VIDEO_DIR}/output.mp4"
 	fi
 elif [[ "${GOURCE_FILTERS}" != "" ]]; then
-	ffmpeg -y -r ${GOURCE_FPS} -f image2pipe -probesize 100M -i ./tmp/gource.pipe \
+	ffmpeg -y -r ${GOURCE_FPS} -f image2pipe -probesize 100M -i "${TMP_DIR}/tmp/gource.pipe" \
 		-filter_complex "${GOURCE_FILTERS}${GLOBAL_FILTERS}" ${FILTER_GRAPH_MAP} \
-		-vcodec libx264 -level ${H264_LEVEL} -pix_fmt yuv420p -crf ${H264_CRF} -preset ${H264_PRESET} -bf 0 ./video/output.mp4
+		-vcodec libx264 -level ${H264_LEVEL} -pix_fmt yuv420p -crf ${H264_CRF} -preset ${H264_PRESET} -bf 0 "${VIDEO_DIR}/output.mp4"
 else
-	ffmpeg -y -r ${GOURCE_FPS} -f image2pipe -probesize 100M -i ./tmp/gource.pipe \
-		-vcodec libx264 -level ${H264_LEVEL} -pix_fmt yuv420p -crf ${H264_CRF} -preset ${H264_PRESET} -bf 0 ./video/output.mp4
+	ffmpeg -y -r ${GOURCE_FPS} -f image2pipe -probesize 100M -i "${TMP_DIR}/tmp/gource.pipe" \
+		-vcodec libx264 -level ${H264_LEVEL} -pix_fmt yuv420p -crf ${H264_CRF} -preset ${H264_PRESET} -bf 0 "${VIDEO_DIR}/output.mp4"
 fi
 
 # Remove our temporary files.
 echo "Removing temporary files."
-rm -rf ./tmp
+rm -rf "${TMP_DIR}/tmp"
 
-# Update html and link new video.
-filesize="$(du -sh /visualization/video/output.mp4 | cut -f 1)"
-printf "$(cat /visualization/html/completed.html)" $filesize >/visualization/html/index.html
-ln -sf /visualization/video/output.mp4 /visualization/html/output.mp4
+# Print completion message
+echo "Video generation completed. Output saved to: ${VIDEO_DIR}/output.mp4"

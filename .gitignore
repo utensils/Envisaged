@@ -23,4 +23,4 @@ Thumbs.db
 arrow/
 
 # Test directories
-git_repo/
+git_repo/__pycache__/
