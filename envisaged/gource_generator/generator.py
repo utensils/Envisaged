@@ -147,8 +147,8 @@ class GourceGenerator:
 
             # Prepare commands
             gource_cmd = self._build_gource_command(log_path, pipe_path, avatar_dir)
-            output_path = output_path or (video_dir / 'output.mp4')
-            ffmpeg_cmd = self._build_ffmpeg_command(pipe_path, output_path)
+            video_path = output_path or (video_dir / 'output.mp4')
+            ffmpeg_cmd = self._build_ffmpeg_command(pipe_path, video_path)
 
             # Run Gource and FFmpeg
             with subprocess.Popen(gource_cmd, stdout=subprocess.PIPE) as gource_process:
@@ -167,7 +167,7 @@ class GourceGenerator:
             self._update_progress(100, "Video generation complete")
 
             # Read the generated video file
-            with open(output_path, 'rb') as f:
+            with open(video_path, 'rb') as f:
                 video_data = f.read()
             
             # If output_path was provided by the user, return None (file is saved)

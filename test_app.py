@@ -6,8 +6,6 @@ import os
 import time
 import sys
 import logging
-from threading import Thread
-from queue import Queue, Empty
 
 # Set up logging with immediate output
 logging.basicConfig(
@@ -19,16 +17,10 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-def stream_output(pipe, prefix):
-    """Stream output from a pipe to logger"""
-    try:
-        for line in iter(pipe.readline, b''):
-            logger.info(f"{prefix}: {line.decode().strip()}")
-    except Exception as e:
-        logger.error(f"Error streaming {prefix}: {e}")
 
-def test_video_generation(caplog):
-    """Test that we can generate a video from a git repository with proper monitoring"""
+
+def test_app_video_generation(caplog):
+    """Test that the Streamlit app can generate a video using the gource_generator package"""
     caplog.set_level(logging.INFO)
     from app import process_video
     
@@ -51,8 +43,7 @@ def test_video_generation(caplog):
         'h264_preset': 'ultrafast',  # Fastest preset for testing
         'h264_crf': 28,  # Lower quality for faster encoding
         'h264_level': '5.1',
-        'fps': 30,  # Lower FPS for faster processing
-        'template': 'border'
+        'fps': 30  # Lower FPS for faster processing
     }
     
     start_time = time.time()
@@ -63,31 +54,25 @@ def test_video_generation(caplog):
         temp_path = Path(temp_dir)
         logger.info(f"Created temporary directory at {temp_path}")
         
-        # Set environment variables
-        os.environ['TMPDIR'] = str(temp_path)
-        os.environ['OUTPUT_DIR'] = str(temp_path / 'output')
-        
+        # Check if gource and ffmpeg are available
+        try:
+            subprocess.run(['gource', '--help'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
+            subprocess.run(['ffmpeg', '-version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
+        except subprocess.CalledProcessError as e:
+            logger.error("Failed to run gource or ffmpeg command")
+            logger.error(f"Error output: {e.stderr.decode() if e.stderr else 'No error output'}")
+            pytest.skip("gource or ffmpeg command failed")
+        except FileNotFoundError:
+            logger.error("gource or ffmpeg not found")
+            pytest.skip("gource or ffmpeg not installed")
+
         # Run video generation with a smaller test repository
         logger.info("Starting video generation...")
         try:
-            # First check if gource and ffmpeg are available
-            try:
-                subprocess.run(['gource', '--help'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
-                subprocess.run(['ffmpeg', '-version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
-            except subprocess.CalledProcessError as e:
-                logger.error("Failed to run gource or ffmpeg command")
-                logger.error(f"Error output: {e.stderr.decode() if e.stderr else 'No error output'}")
-                raise
-            except FileNotFoundError:
-                logger.error("gource or ffmpeg not found. Please ensure both are installed.")
-                raise
-
             video_data = process_video('https://github.com/utensils/essex.git', settings, is_test=True)
         except Exception as e:
             logger.error(f"Error during video generation: {e}")
-            # Log the full traceback
-            import traceback
-            logger.error(traceback.format_exc())
+            logger.error("Full traceback:", exc_info=True)
             raise
         
         duration = time.time() - start_time
