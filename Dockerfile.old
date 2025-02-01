@@ -1,0 +1,137 @@
+# Envisaged - Dockerized Gource Visualizations
+
+FROM utensils/opengl:stable
+
+# Install all required runtime dependencies in a single layer.
+RUN set -xe; \
+    apk add --no-cache --update \
+        bash \
+        boost-dev \
+        build-base \
+        cmake \
+        curl \
+        ffmpeg \
+        gflags-dev \
+        git \
+        gource \
+        imagemagick \
+        jpeg-dev \
+        lapack-dev \
+        lighttpd \
+        openblas-dev \
+        py3-numpy \
+        py3-numpy-dev \
+        py3-pip \
+        py3-setuptools \
+        py3-wheel \
+        python3 \
+        python3-dev \
+        snappy-dev \
+        subversion \
+        unzip \
+        wget \
+        zlib-dev; \
+    # Install Python packages
+    pip3 install --no-cache-dir --upgrade pip; \
+    pip3 install --no-cache-dir google-api-python-client progressbar2; \
+    pip3 install  --no-cache-dir Cython; \
+    # Download and install youtube-upload
+    wget -q https://github.com/tokland/youtube-upload/archive/master.zip; \
+    unzip master.zip; \
+    cd youtube-upload-master; \
+    python3 setup.py install; \
+    cd ..; \
+    rm -rf youtube-upload-master master.zip;
+
+# Copy entrypoint script and project files
+# COPY ./docker-entrypoint.sh /usr/local/bin/entrypoint.sh
+# COPY . /visualization/
+
+
+# Install Rust using rustup
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y; \
+    echo "source $HOME/.cargo/env" >> /etc/profile; \
+    /bin/sh -c "source $HOME/.cargo/env";
+
+# Set Python and NumPy paths
+ENV PYTHON_EXECUTABLE=/usr/bin/python3
+ENV Python3_ROOT_DIR=/usr/include/python3.8
+ENV Python3_LIBRARY=/usr/lib/libpython3.8.so
+ENV Python3_INCLUDE_DIR=/usr/include/python3.8
+ENV Python3_NumPy_INCLUDE_DIRS=/usr/lib/python3.8/site-packages/numpy/core/include
+
+# Clone and build Apache Arrow
+RUN git clone https://github.com/apache/arrow.git; \
+    cd arrow/cpp; \
+    mkdir release; \
+    cd release; \
+    cmake .. \
+        -DARROW_PARQUET=ON \
+        -DARROW_PYTHON=ON \
+        -DARROW_BUILD_SHARED=ON \
+        -DARROW_WITH_BROTLI=ON \
+        -DARROW_WITH_ZSTD=ON \
+        -DARROW_WITH_LZ4=ON \
+        -DARROW_WITH_SNAPPY=ON \
+        -DARROW_WITH_RE2=OFF \
+        -DARROW_JEMALLOC=OFF \
+        -DARROW_BOOST_USE_SHARED=ON \
+        -DARROW_BUILD_STATIC=ON \
+        -DARROW_CXXFLAGS="-D_GLIBCXX_USE_CXX11_ABI=0"; \
+    make -j$(($(nproc) / 2)); \  
+    make install
+
+# Build pyarrow in the python directory
+# RUN cd /visualization/arrow/python; \
+#     pip3 install --no-cache-dir -r requirements-build.txt; \
+#     python3 setup.py build_ext --inplace -j $(($(nproc) / 2)); \
+#     pip3 install .
+
+# RUN rm -rf /visualization/arrow;
+
+# Set working directory
+WORKDIR /visualization
+
+# Labels and metadata
+ARG BUILD_DATE
+LABEL \
+    org.opencontainers.image.authors="James Brink <brink.james@gmail.com>" \
+    org.opencontainers.image.description="Envisaged - Dockerized Gource Visualizations" \
+    org.opencontainers.image.source="https://github.com/utensils/Envisaged" \
+    org.opencontainers.image.title="Envisaged" \
+    org.opencontainers.image.vendor="Utensils" \
+    org.opencontainers.image.created=$BUILD_DATE
+
+# Set environment variables
+ENV \
+    DISPLAY=":99" \
+    GIT_URL="https://github.com/moby/moby" \
+    GLOBAL_FILTERS="" \
+    GOURCE_AUTO_SKIP_SECONDS="0.5" \
+    GOURCE_BACKGROUND_COLOR="000000" \
+    GOURCE_CAMERA_MODE="overview" \
+    GOURCE_DIR_DEPTH="3" \
+    GOURCE_FILENAME_TIME="2" \
+    GOURCE_FILTERS="" \
+    GOURCE_FONT_SIZE="48" \
+    GOURCE_HIDE_ITEMS="usernames,mouse,date,filenames" \
+    GOURCE_MAX_USER_SPEED="500" \
+    GOURCE_SECONDS_PER_DAY="0.1" \
+    GOURCE_TEXT_COLOR="FFFFFF" \
+    GOURCE_TIME_SCALE="1.5" \
+    GOURCE_TITLE="Software Development" \
+    GOURCE_USER_IMAGE_DIR="/visualization/avatars" \
+    GOURCE_USER_SCALE="1.5" \
+    H264_CRF="23" \
+    H264_LEVEL="5.1" \
+    H264_PRESET="medium" \
+    INVERT_COLORS="false" \
+    LOGO_URL="" \
+    OVERLAY_FONT_COLOR="0f5ca8" \
+    PATH="/root/.cargo/bin:${PATH}"
+
+
+EXPOSE 80 8501
+
+# Set our entrypoint.
+# CMD ["/usr/local/bin/entrypoint.sh"]

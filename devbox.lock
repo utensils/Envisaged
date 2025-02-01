@@ -1,0 +1,406 @@
+{
+  "lockfile_version": "1",
+  "packages": {
+    "ffmpeg-full@7.1": {
+      "last_modified": "2025-01-27T20:31:03Z",
+      "resolved": "github:NixOS/nixpkgs/f898cbfddfab52593da301a397a17d0af801bbc3#ffmpeg-full",
+      "source": "devbox-search",
+      "version": "7.1",
+      "systems": {
+        "aarch64-darwin": {
+          "outputs": [
+            {
+              "name": "bin",
+              "path": "/nix/store/k00ai5j4k61v9rbgkshnzp9cvkda6kaq-ffmpeg-full-7.1-bin",
+              "default": true
+            },
+            {
+              "name": "man",
+              "path": "/nix/store/91a6vrjfr9knn6a6xagm197w18knk21j-ffmpeg-full-7.1-man",
+              "default": true
+            },
+            {
+              "name": "data",
+              "path": "/nix/store/mw94rbbjarvi2gr7938sgxv7l6y5ai91-ffmpeg-full-7.1-data"
+            },
+            {
+              "name": "dev",
+              "path": "/nix/store/v47ygdnyvnc4cs6lj3srby5axkay2w83-ffmpeg-full-7.1-dev"
+            },
+            {
+              "name": "doc",
+              "path": "/nix/store/j7rjr9zfhn6zbb311zih41p63xiw9da5-ffmpeg-full-7.1-doc"
+            },
+            {
+              "name": "lib",
+              "path": "/nix/store/n54qq91bsfqdpc6qbz7q5q7fipj3ngid-ffmpeg-full-7.1-lib"
+            },
+            {
+              "name": "out",
+              "path": "/nix/store/8pijy624avrscgcahrsb6acpxwph25sz-ffmpeg-full-7.1"
+            }
+          ],
+          "store_path": "/nix/store/k00ai5j4k61v9rbgkshnzp9cvkda6kaq-ffmpeg-full-7.1-bin"
+        },
+        "aarch64-linux": {
+          "outputs": [
+            {
+              "name": "bin",
+              "path": "/nix/store/d16gii6wgc5g54wv7nn8zaijdjlwphyl-ffmpeg-full-7.1-bin",
+              "default": true
+            },
+            {
+              "name": "man",
+              "path": "/nix/store/zl20vidamjzkpl3hs5xxvz6c7nvs1y1w-ffmpeg-full-7.1-man",
+              "default": true
+            },
+            {
+              "name": "lib",
+              "path": "/nix/store/pcx7mfbkn0q83wchx5wqa1izvmwjc23g-ffmpeg-full-7.1-lib"
+            },
+            {
+              "name": "out",
+              "path": "/nix/store/2phvy8ss0jajnklk1lw981rzri7crr67-ffmpeg-full-7.1"
+            },
+            {
+              "name": "data",
+              "path": "/nix/store/lkcnf3q6wr80jl9irwv2y68h6018ic6z-ffmpeg-full-7.1-data"
+            },
+            {
+              "name": "dev",
+              "path": "/nix/store/775wyxw5m6y6blsmlfagwfbpwcik60sf-ffmpeg-full-7.1-dev"
+            },
+            {
+              "name": "doc",
+              "path": "/nix/store/6xk6cim57yi6af4m69hn4bdb0i9lfr6b-ffmpeg-full-7.1-doc"
+            }
+          ],
+          "store_path": "/nix/store/d16gii6wgc5g54wv7nn8zaijdjlwphyl-ffmpeg-full-7.1-bin"
+        },
+        "x86_64-darwin": {
+          "outputs": [
+            {
+              "name": "bin",
+              "path": "/nix/store/6wk9g7zdzx3p1s3hgb6l126b7651pqqh-ffmpeg-full-7.1-bin",
+              "default": true
+            },
+            {
+              "name": "man",
+              "path": "/nix/store/w6x31ivb0gbh7w19sa08i29hqpzphj29-ffmpeg-full-7.1-man",
+              "default": true
+            },
+            {
+              "name": "doc",
+              "path": "/nix/store/hr69gnk70c09f8l7h05dwxxr822275g7-ffmpeg-full-7.1-doc"
+            },
+            {
+              "name": "lib",
+              "path": "/nix/store/jv9rylpjgkrr9lr3l2c2200bdcpawbd5-ffmpeg-full-7.1-lib"
+            },
+            {
+              "name": "out",
+              "path": "/nix/store/gpjki0j0p80jz7r6vlll6rh8ksdjhi0d-ffmpeg-full-7.1"
+            },
+            {
+              "name": "data",
+              "path": "/nix/store/v1g121nrz7y5bf8zph8xbzjlafjaalwy-ffmpeg-full-7.1-data"
+            },
+            {
+              "name": "dev",
+              "path": "/nix/store/004qxxm7c39g498nr6c509adjpzmwwpd-ffmpeg-full-7.1-dev"
+            }
+          ],
+          "store_path": "/nix/store/6wk9g7zdzx3p1s3hgb6l126b7651pqqh-ffmpeg-full-7.1-bin"
+        },
+        "x86_64-linux": {
+          "outputs": [
+            {
+              "name": "bin",
+              "path": "/nix/store/pzpbzn3y8n1ps5p3slfk79gym3yk9g4i-ffmpeg-full-7.1-bin",
+              "default": true
+            },
+            {
+              "name": "man",
+              "path": "/nix/store/hb8dkap5b0rvp85ajlyiijmrzf3zdzs7-ffmpeg-full-7.1-man",
+              "default": true
+            },
+            {
+              "name": "out",
+              "path": "/nix/store/rid4vpcvy30sd3n75jln7v6fzzs57cpj-ffmpeg-full-7.1"
+            },
+            {
+              "name": "data",
+              "path": "/nix/store/nii0k39m694dcdvnnbf3rfbn0iqvwz2k-ffmpeg-full-7.1-data"
+            },
+            {
+              "name": "dev",
+              "path": "/nix/store/x3gvglvaz3x99pr4iyd6rcx1579730z2-ffmpeg-full-7.1-dev"
+            },
+            {
+              "name": "doc",
+              "path": "/nix/store/9zvffss4q1p2zw8xm41f0qmsvr9l6kyf-ffmpeg-full-7.1-doc"
+            },
+            {
+              "name": "lib",
+              "path": "/nix/store/0v5rhsad0jp9g95shyznlgkvwl2v40cl-ffmpeg-full-7.1-lib"
+            }
+          ],
+          "store_path": "/nix/store/pzpbzn3y8n1ps5p3slfk79gym3yk9g4i-ffmpeg-full-7.1-bin"
+        }
+      }
+    },
+    "gource@0.55": {
+      "last_modified": "2025-01-19T08:16:51Z",
+      "resolved": "github:NixOS/nixpkgs/50165c4f7eb48ce82bd063e1fb8047a0f515f8ce#gource",
+      "source": "devbox-search",
+      "version": "0.55",
+      "systems": {
+        "aarch64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/hxj5adkr0h20m5r09hjx01nvplsbg3vs-gource-0.55",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/hxj5adkr0h20m5r09hjx01nvplsbg3vs-gource-0.55"
+        },
+        "aarch64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/cwvxs86z3b06bfgsdmzmkvrxy3wl1azd-gource-0.55",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/cwvxs86z3b06bfgsdmzmkvrxy3wl1azd-gource-0.55"
+        },
+        "x86_64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/wlha6qcvyfsc6hmynwxb7n3gpp540scy-gource-0.55",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/wlha6qcvyfsc6hmynwxb7n3gpp540scy-gource-0.55"
+        },
+        "x86_64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/wlc28fimqsinh3z9zvqavcyzyn8k6v2r-gource-0.55",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/wlc28fimqsinh3z9zvqavcyzyn8k6v2r-gource-0.55"
+        }
+      }
+    },
+    "python-full@3.12.6": {
+      "last_modified": "2024-10-13T23:44:06Z",
+      "plugin_version": "0.0.4",
+      "resolved": "github:NixOS/nixpkgs/d4f247e89f6e10120f911e2e2d2254a050d0f732#python312Full",
+      "source": "devbox-search",
+      "version": "3.12.6",
+      "systems": {
+        "aarch64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/rncwh0fv7ysn7mpahsr4w98zy10dhzwp-python3-3.12.6",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/rncwh0fv7ysn7mpahsr4w98zy10dhzwp-python3-3.12.6"
+        },
+        "aarch64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/sq20341kg2yz6rjr4lnq1p5v2x9ry1lm-python3-3.12.6",
+              "default": true
+            },
+            {
+              "name": "debug",
+              "path": "/nix/store/ly98bkiksw80d9mn0mgv458mbwxz62zx-python3-3.12.6-debug"
+            }
+          ],
+          "store_path": "/nix/store/sq20341kg2yz6rjr4lnq1p5v2x9ry1lm-python3-3.12.6"
+        },
+        "x86_64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/ibgkv0sx9b09j0p1wlv26hb5wspcyvn8-python3-3.12.6",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/ibgkv0sx9b09j0p1wlv26hb5wspcyvn8-python3-3.12.6"
+        },
+        "x86_64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/bsnx84gmxkvvbsabki10bm9fc8gkwixw-python3-3.12.6",
+              "default": true
+            },
+            {
+              "name": "debug",
+              "path": "/nix/store/qs3l0fdf8kisxn46valnndw8g69s7cji-python3-3.12.6-debug"
+            }
+          ],
+          "store_path": "/nix/store/bsnx84gmxkvvbsabki10bm9fc8gkwixw-python3-3.12.6"
+        }
+      }
+    },
+    "python312Packages.pip@24.0": {
+      "last_modified": "2024-11-03T14:18:04Z",
+      "resolved": "github:NixOS/nixpkgs/4ae2e647537bcdbb82265469442713d066675275#python312Packages.pip",
+      "source": "devbox-search",
+      "version": "24.0",
+      "systems": {
+        "aarch64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/khvy097rvisfrlignh8nc01agx9k2zri-python3.12-pip-24.0",
+              "default": true
+            },
+            {
+              "name": "man",
+              "path": "/nix/store/8hv1541s7x2dmd9x1rrm6p9lcpkbryg6-python3.12-pip-24.0-man",
+              "default": true
+            },
+            {
+              "name": "dist",
+              "path": "/nix/store/1m4bzisj3b6gc4rh08qi2bmwy4qdblxv-python3.12-pip-24.0-dist"
+            }
+          ],
+          "store_path": "/nix/store/khvy097rvisfrlignh8nc01agx9k2zri-python3.12-pip-24.0"
+        },
+        "aarch64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/qzrj4wfqy0kz82wx5dkbnfc5kll2ld2g-python3.12-pip-24.0",
+              "default": true
+            },
+            {
+              "name": "man",
+              "path": "/nix/store/0ifma2m8rl2n5irn8gci73ny7xmvwq17-python3.12-pip-24.0-man",
+              "default": true
+            },
+            {
+              "name": "dist",
+              "path": "/nix/store/93ixqixsl9jf4yzimfmix3ki1mzy7ikp-python3.12-pip-24.0-dist"
+            }
+          ],
+          "store_path": "/nix/store/qzrj4wfqy0kz82wx5dkbnfc5kll2ld2g-python3.12-pip-24.0"
+        },
+        "x86_64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/ws2ixgjdbqk2i3fxxjlr71867rcj2nf5-python3.12-pip-24.0",
+              "default": true
+            },
+            {
+              "name": "man",
+              "path": "/nix/store/0sxv2q7wv500n2q7y2r7j7vmk12s7i4k-python3.12-pip-24.0-man",
+              "default": true
+            },
+            {
+              "name": "dist",
+              "path": "/nix/store/jr62lknc5dnagxck760sw4jqvsg966s4-python3.12-pip-24.0-dist"
+            }
+          ],
+          "store_path": "/nix/store/ws2ixgjdbqk2i3fxxjlr71867rcj2nf5-python3.12-pip-24.0"
+        },
+        "x86_64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/nc8b6n3ah29rswyb790mr02zjpfsyznd-python3.12-pip-24.0",
+              "default": true
+            },
+            {
+              "name": "man",
+              "path": "/nix/store/g7hyv5psaglizb9yfp32n502ypi4pzwy-python3.12-pip-24.0-man",
+              "default": true
+            },
+            {
+              "name": "dist",
+              "path": "/nix/store/bd4fxfx6d2jw20mism76wax2wgky3fv4-python3.12-pip-24.0-dist"
+            }
+          ],
+          "store_path": "/nix/store/nc8b6n3ah29rswyb790mr02zjpfsyznd-python3.12-pip-24.0"
+        }
+      }
+    },
+    "python312Packages.streamlit@1.39.0": {
+      "last_modified": "2024-11-06T21:27:13Z",
+      "resolved": "github:NixOS/nixpkgs/fe348e1a06a2d791e992d46844a83d2d44436c5a#python312Packages.streamlit",
+      "source": "devbox-search",
+      "version": "1.39.0",
+      "systems": {
+        "aarch64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/whdd06ry3bbxx3b0zys7qrlqsnbyi8ch-python3.12-streamlit-1.39.0",
+              "default": true
+            },
+            {
+              "name": "dist",
+              "path": "/nix/store/323cy8jdrmi2lih0774av8g962slbzbk-python3.12-streamlit-1.39.0-dist"
+            }
+          ],
+          "store_path": "/nix/store/whdd06ry3bbxx3b0zys7qrlqsnbyi8ch-python3.12-streamlit-1.39.0"
+        },
+        "aarch64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/8mj3v2h5pszp886f2cidbfy2qxxvdsj9-python3.12-streamlit-1.39.0",
+              "default": true
+            },
+            {
+              "name": "dist",
+              "path": "/nix/store/xxw252lris4hc3v522z8lyj7w2qi3ws2-python3.12-streamlit-1.39.0-dist"
+            }
+          ],
+          "store_path": "/nix/store/8mj3v2h5pszp886f2cidbfy2qxxvdsj9-python3.12-streamlit-1.39.0"
+        },
+        "x86_64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/p17qz07wjjya5hxi9fav90kb7va48pfl-python3.12-streamlit-1.39.0",
+              "default": true
+            },
+            {
+              "name": "dist",
+              "path": "/nix/store/hqsa8l2j2n4y4agvw73scwr6cbx6657h-python3.12-streamlit-1.39.0-dist"
+            }
+          ],
+          "store_path": "/nix/store/p17qz07wjjya5hxi9fav90kb7va48pfl-python3.12-streamlit-1.39.0"
+        },
+        "x86_64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/rdlhh016hmqw8nnmq69wgby9igj7w50k-python3.12-streamlit-1.39.0",
+              "default": true
+            },
+            {
+              "name": "dist",
+              "path": "/nix/store/z2p88vviam28zibcj57almm4rypgr8r7-python3.12-streamlit-1.39.0-dist"
+            }
+          ],
+          "store_path": "/nix/store/rdlhh016hmqw8nnmq69wgby9igj7w50k-python3.12-streamlit-1.39.0"
+        }
+      }
+    }
+  }
+}

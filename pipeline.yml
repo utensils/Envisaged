@@ -1,39 +1,39 @@
 ---
-  resources:
-    - name: envisaged-git
-      type: git
-      icon: github-circle
-      source:
-        uri: https://github.com/utensils/Envisaged.git
+name: Gource Visualization
 
-    - name: opengl-cache
-      type: docker-image
-      source:
-        repository: utensils/opengl
-        tag: stable
-  
-    - name: envisaged-image
-      type: docker-image
-      source:
-        email: ((docker-hub-email))
-        username: ((docker-hub-username))
-        password: ((docker-hub-password))
-        repository: utensils/envisaged
-  
-  jobs:
-    - name: build
-      public: true
-      plan:
-        - get: envisaged-git
-          trigger: true
-        - get: opengl-cache
-          params: {save: true}
-        - put: envisaged-image
-          params:
-            build: envisaged-git/
-            load_base: opengl-cache
-            tag_file: envisaged-git/VERSION
-            tag_as_latest: true
-            build_args:
-              cache: true
-  
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Generate Visualization
+        run: |
+          ./border_template.sh
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: gource-visualization
+          path: output/gource.mp4

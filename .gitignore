@@ -1,1 +1,23 @@
-.vscode
+# Build outputs
+output/
+*.mp4
+*.png
+
+# System files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.idea/
+*.swp
+
+# Temporary files
+*.tmp
+*.log
+
+# Arrow files
+*.arrow
+*.parquet
+.pyarrow-cache/
+*.feather
+arrow/

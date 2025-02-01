@@ -1,0 +1,22 @@
+{
+  "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.13.4/.schema/devbox.schema.json",
+  "packages": [
+    "python312Packages.pip@24.0",
+    "python-full@3.12.6",
+    "python312Packages.streamlit@1.39.0",
+    "gource@0.55",
+    "ffmpeg-full@7.1"
+  ],
+  "shell": {
+    "init_hook": [
+      "export VENV_DIR=$PWD/.venv",
+      "[[ -d $VENV_DIR ]] || python3 -m venv $VENV_DIR",
+      ". $VENV_DIR/bin/activate"
+    ],
+    "scripts": {
+      "test": [
+        "echo \"Error: no test specified\" && exit 1"
+      ]
+    }
+  }
+}
