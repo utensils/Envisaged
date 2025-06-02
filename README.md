@@ -1,127 +1,137 @@
 # Envisaged - Dockerized Gource Visualizations
 
-[![CircleCI](https://circleci.com/gh/utensils/Envisaged.svg?style=svg)](https://circleci.com/gh/utensils/Envisaged) [![Docker Automated build](https://img.shields.io/docker/automated/utensils/envisaged.svg)](https://hub.docker.com/r/utensils/envisaged/) [![Docker Pulls](https://img.shields.io/docker/pulls/utensils/envisaged.svg)](https://hub.docker.com/r/utensils/envisaged/) [![Docker Stars](https://img.shields.io/docker/stars/utensils/envisaged.svg)](https://hub.docker.com/r/utensils/envisaged/) [![](https://images.microbadger.com/badges/image/utensils/envisaged.svg)](https://microbadger.com/images/utensils/envisaged "Get your own image badge on microbadger.com") [![](https://images.microbadger.com/badges/version/utensils/envisaged.svg)](https://microbadger.com/images/utensils/envisaged "Get your own version badge on microbadger.com")
+[![CI](https://github.com/utensils/Envisaged/actions/workflows/ci.yml/badge.svg)](https://github.com/utensils/Envisaged/actions/workflows/ci.yml) [![Docker Pulls](https://img.shields.io/docker/pulls/utensils/envisaged.svg)](https://hub.docker.com/r/utensils/envisaged/) [![Docker Stars](https://img.shields.io/docker/stars/utensils/envisaged.svg)](https://hub.docker.com/r/utensils/envisaged/)
 
-Built on top of [`utensils/opengl:stable`][utensils/opengl] (Alpine 3.12). **No GPU is required**, this will run on any machine, such as a standard EC2 instance or any other VPS.  
+Built on a modern Python Alpine base. **No GPU is required**; this tool runs entirely on CPU, making it suitable for any machine, such as a standard EC2 instance or any other VPS.
 
 ## About
 
-Painless data visualizations from git history showing a repositories development progression over time.  
-This container combines the awesome [Gource][gource] program with the power of [FFmpeg][ffmpeg_home] and the h.264 codec to bring you high resolution (up to 4k at 60fps) video visualizations.
+Envisaged is a Dockerized tool that uses a Python script to orchestrate [Gource][gource] and [FFmpeg][ffmpeg_home] for creating compelling visualizations of software repository history. It shows the development progression of a project over time.
 
-This container is 100% headless, it does this by leveraging [Xvfb][xvfb] combined with the [Mesa 3d Gallium llvmpipe Driver][mesa]. Unlike other docker containers with Gource, this container does not eat up 100's of gigabtyes of disk space, nor does it require an actual GPU to run. The process runs the Gource simulation concurrently with the FFmpeg encoding process using a set of named pipes. There is a slight trade off in performance, but this makes it very easy to run in any environment such as AWS without the need to provision large amounts of storage, or run any cleanup.  
+This container operates headlessly, leveraging [Xvfb][xvfb] with the [Mesa 3D Gallium llvmpipe Driver][mesa] for rendering. This approach allows Envisaged to run in environments without a dedicated GPU. The Python script manages the Gource simulation and FFmpeg encoding process, piping data between them, which avoids the need for large amounts of temporary disk space.
 
-Envisaged uses "template" scripts to generate specific looks, such as the one included in this container which is simply called **border** which places a frame around the Gource visualization and isolates the date and key on the outside of this border. If you would like to run the container with normal Gource output, simply pass `-e TEMPLATE=none` and it will use the `no_template.sh` script.
+The primary output is an MP4 video file, saved directly to a user-specified volume mount. Envisaged offers various "templates" (like `border` or `none`) and a wide range of Gource and FFmpeg parameters configurable via environment variables to customize the visualization.
 
+## Example Videos
 
+*These examples are from a previous version but showcase the type of visualizations you can create.*
 
-This container is configurable through environment variables listed below. The generated video is delivered via HTTP.
-
-## Example videos
-
-
-| GitHub Repo                    | YouTube Video                                                                                                                                                                                                                     |
+| GitHub Repo                    | YouTube Video (Old Version Showcase)                                                                                                                                                                                              |
 | ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [Elixir School][elixir-school] | <a href="http://www.youtube.com/watch?feature=player_embedded&v=twpR-opLrZU" target="_blank"><img src="http://img.youtube.com/vi/twpR-opLrZU/0.jpg" alt="Elixir School Visualization" width="240" height="180" border="10" /></a> |
 | [Kubernetes][kubernetes]       | <a href="http://www.youtube.com/watch?feature=player_embedded&v=UTwxiwF7Zac" target="_blank"><img src="http://img.youtube.com/vi/UTwxiwF7Zac/0.jpg" alt="Kubernetes Visualization" width="240" height="180" border="10" /></a>    |
 | [Elixir Lang][elixir]          | <a href="http://www.youtube.com/watch?feature=player_embedded&v=wl5uuvDK3ao" target="_blank"><img src="http://img.youtube.com/vi/wl5uuvDK3ao/0.jpg" alt="Elixir Lang Visualization" width="240" height="180" border="10" /></a>   |
 
-
-
-
 ## Usage Examples
 
-Run with the default settings which will create a visualization of the Docker GitHub repository.  
-Notice we are **exposing port 80**, the final video will be served at <http://localhost:8080/>  
+Mount a local directory (e.g., `./output`) to `/visualization` in the container. The generated video will be placed in the `video` subdirectory within this mounted volume.
 
-The following example will run a visualization on the Kubernetes GitHub repository and include the Kubernetes logo
-in the video.
+**1. Basic Example (Remote Git Repository):**
+Visualizes the [https://github.com/git-fixtures/basic.git](https://github.com/git-fixtures/basic.git) repository.
 
 ```shell
-docker run --rm -p 8080:80 --name envisaged \
-       -e GIT_URL=https://github.com/kubernetes/kubernetes.git \
-       -e LOGO_URL=https://raw.githubusercontent.com/kubernetes/kubernetes/master/logo/logo.png \
-       -e GOURCE_TITLE="Kubernetes Development" \
+docker run --rm \
+       -v $(pwd)/output:/visualization \
+       -e GIT_URL=https://github.com/git-fixtures/basic.git \
+       -e GOURCE_TITLE="Basic Git Fixture" \
        utensils/envisaged
 ```
+The video will be saved to `./output/video/output.mp4`.
 
-Running a visualization against a local git repo.  
+**2. Local Git Repository:**
+Visualizes a Git repository located at `/path/to/your/repo` on your host machine.
 
-```
-docker run --rm -p 8080:80 --name envisaged \
+```shell
+docker run --rm \
        -v /path/to/your/repo:/visualization/git_repo:ro \
-       -e GOURCE_TITLE="Your Project Development" \
+       -v $(pwd)/output:/visualization \
+       -e GOURCE_TITLE="Your Local Project" \
        utensils/envisaged
 ```
+The video will be saved to `./output/video/output.mp4`.
 
-You can also combine multiple repositories into a single rendering by mounting a directory of repository
-directories onto `/visualization/git_repos` (the plural of `visualization/git_repo`).
+**3. Multiple Local Git Repositories:**
+Combines histories from multiple repositories located in subdirectories of `/path/to/your/repos`.
 
-```
-docker run --rm -p 8080:80 --name envisaged \
+```shell
+docker run --rm \
        -v /path/to/your/repos:/visualization/git_repos:ro \
-       -e GOURCE_TITLE="Your Project Development" \
+       -v $(pwd)/output:/visualization \
+       -e GOURCE_TITLE="Combined Projects" \
        utensils/envisaged
 ```
+The video will be saved to `./output/video/output.mp4`.
 
-Optionally, you can have gource render avatars of the authors by mounting a volume with images of the authors.
+**4. Including User Avatars:**
+Renders user avatars by mounting a directory of images. Images should be named after the committer's username (e.g., `username.png`).
 
-```
-docker run --rm -p 8080:80 --name envisaged \
+```shell
+docker run --rm \
        -v /path/to/your/repo:/visualization/git_repo:ro \
        -v /path/to/your/avatars:/visualization/avatars:ro \
-       -e GOURCE_TITLE="Your Project Development" \
+       -v $(pwd)/output:/visualization \
+       -e GOURCE_TITLE="Project With Avatars" \
        utensils/envisaged
 ```
+The video will be saved to `./output/video/output.mp4`.
 
-The avatars in that directory must have filenames that match the author id, e.g. `utensils.gif`, etc.
+## Output Description
 
-Now open your browser to <http://localhost:8080/> and once the video is completed you will see the link with the video size.
+The primary output is an MP4 video file generated by FFmpeg. This file is saved as `output.mp4` inside the `video` subdirectory of the volume mounted to `/visualization` in the container. For example, if you use `-v $(pwd)/my_videos:/visualization`, the output will be at `./my_videos/video/output.mp4` on your host system.
 
 ## Environment Variables
 
-| Variable                   | Default Value                    | Description                                                                                                 |
-| -------------------------- | -------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `GIT_URL`                  | `<docker repo on GH>`            | URL of git repository to be cloned and analyzed for visualization.                                          |
-| `LOGO_URL`                 | `<docker logo>`                  | URL of logo to be overlayed in lower right hand corner of video.                                            |
-| `H264_PRESET`              | `medium`                         | h.264 encoding preset. refer to [FFmpeg's wiki][ffmpeg].                                                    |
-| `H264_CRF`                 | `23`                             | The Constant Rate Factor (CRF) is the default quality for h.264 encoding. refer to [FFmpeg's wiki][ffmpeg]. |
-| `H264_LEVEL`               | `5.1`                            | h.264 encoding level. Refer to [FFmpeg's wiki][ffmpeg].                                                     |
-| `VIDEO_RESOLUTION`         | `1080p`                          | Output video resolution, options are **2160p, 1440p, 1080p, 720p**                                          |
-| `GOURCE_FPS`         | `60`                          | Output video frame rate                                          |
-| `TEMPLATE`                 | `border`                         | This is the template script that will be run. Options are **border**, and **none**.                         |
-| `GOURCE_TITLE`             | `Software Development`           | Title to be displayed in the lower left hand corner of video.                                               |
-| `OVERLAY_FONT_COLOR`       | `0f5ca8`                         | Font color to be used on the overlay (Date only).                                                           |
-| `GOURCE_CAMERA_MODE`       | `overview`                       | Camera mode (overview, track).                                                                              |
-| `GOURCE_SECONDS_PER_DAY`   | `0.1`                            | Speed of simulation in seconds per day.                                                                     |
-| `GOURCE_TIME_SCALE`        | `1.5`                            | Change simulation time scale.                                                                               |
-| `GOURCE_USER_SCALE`        | `1.5`                            | Change scale of user avatars.                                                                               |
-| `GOURCE_AUTO_SKIP_SECONDS` | `0.5`                            | Skip to next entry if nothing happens for a number of seconds.                                              |
-| `GOURCE_BACKGROUND_COLOR`  | `000000`                         | Background color in hex.                                                                                    |
-| `GOURCE_TEXT_COLOR`        | `FFFFFF`                         | **Not Implemented.**                                                                                        |
-| `GOURCE_HIDE_ITEMS`        | `usernames,mouse,date,filenames` | Hide one or more display elements                                                                           |
-| `GOURCE_FONT_SIZE`         | `48`                             | **Not Implemented.**                                                                                        |
-| `GOURCE_DIR_DEPTH`         | `3`                              | Draw names of directories down to a specific depth in the tree.                                             |
-| `GOURCE_FILENAME_TIME`     | `2`                              | Duration to keep filenames on screen (>= 2.0).                                                              |
-| `GOURCE_MAX_USER_SPEED`    | `500`                            | Max speed users can travel per second.                                                                      |
-| `INVERT_COLORS`            | `false`                          | Inverts the colors on the visualization.                                                                    |
+The behavior of Envisaged is controlled by environment variables. The Python script (`envisaged.py`) reads these at runtime.
 
-[alpine linux image]: https://github.com/gliderlabs/docker-alpine
+| Variable                     | Default Value                        | Description                                                                                                   |
+| ---------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
+| `VISUALIZATION_DIR`          | `/visualization`                     | Base directory inside the container for input (repos, avatars) and output (video). Usually a volume mount.    |
+| `GIT_URL`                    | (None)                               | URL of a single git repository to clone and analyze.                                                          |
+| `LOGO_URL`                   | (None)                               | URL of a logo image to download and overlay on the video.                                                     |
+| `VIDEO_RESOLUTION`           | `1280x720`                           | Output video resolution (e.g., `1920x1080`, `1280x720`).                                                       |
+| `VIDEO_FRAMERATE`            | `25`                                 | Framerate for Gource and FFmpeg.                                                                              |
+| `VIDEO_BITRATE`              | `5M`                                 | Target video bitrate for FFmpeg (e.g., `2M`, `10M`).                                                          |
+| `TEMPLATE`                   | `none`                               | Visualization template. Options: `none` (standard Gource), `border` (Gource with an overlay border/sidebar). |
+| `GOURCE_TITLE`               | (None)                               | Title text to be displayed by Gource.                                                                         |
+| `GOURCE_SECONDS_PER_DAY`     | `0.1`                                | Speed of simulation in seconds per day.                                                                       |
+| `GOURCE_AUTO_SKIP_SECONDS`   | `0.1`                                | Skip to next entry if nothing happens for this many seconds.                                                  |
+| `GOURCE_FILE_IDLE_TIME`      | `0`                                  | Hide files if inactive for this many seconds (0 to disable).                                                  |
+| `GOURCE_MAX_FILES`           | `0`                                  | Max number of files displayed (0 for unlimited).                                                              |
+| `GOURCE_USER_SCALE`          | `1.0`                                | Scale of user avatars.                                                                                        |
+| `GOURCE_CAMERA_MODE`         | (Gource default, usually `track`)    | Gource camera mode (e.g., `overview`, `track`).                                                               |
+| `GOURCE_BACKGROUND_COLOUR`   | `000000`                             | Background color in hex (e.g., `000000` for black).                                                           |
+| `GOURCE_FONT_SIZE`           | `20`                                 | Font size used by Gource for various text elements.                                                           |
+| `GOURCE_FONT_COLOUR`         | `FFFFFF`                             | Font color in hex used by Gource.                                                                             |
+| `GOURCE_HIDE_ITEMS`          | (None)                               | Comma-separated list of items to hide (e.g., `filenames,dirnames,usernames,mouse,date`).                    |
+| `GOURCE_LOGO`                | (None)                               | Path to a logo file *if not using `LOGO_URL` for FFmpeg overlay*. Gource will render this logo.              |
+| `GOURCE_START_DATE`          | (None)                               | Visualize from this date (YYYY-MM-DD). Passed to Gource for log generation and rendering.                   |
+| `GOURCE_STOP_DATE`           | (None)                               | Visualize until this date (YYYY-MM-DD). Passed to Gource for log generation and rendering.                  |
+| `GOURCE_ELASTICITY`          | `0.0`                                | Elasticity of the Gource simulation.                                                                          |
+| `GOURCE_USER_FRICTION`       | `0.2`                                | User avatar friction in the Gource simulation.                                                                |
+| `GOURCE_PADDING`             | `1.0`                                | Padding around Gource elements.                                                                               |
+| `GOURCE_USER_IMAGE_DIR`      | `/visualization/avatars`             | Path to user avatar images directory (mounted into the container).                                            |
+| `GOURCE_DATE_FORMAT`         | `%Y-%m-%d %H:%M`                     | Date format string for the overlay in the `border` template.                                                  |
+| `H264_PRESET`                | `medium`                             | FFmpeg H.264 encoding preset. See [FFmpeg H.264 docs][ffmpeg_h264].                                           |
+| `H264_CRF`                   | `23`                                 | FFmpeg H.264 Constant Rate Factor (0-51, lower is better quality). See [FFmpeg H.264 docs][ffmpeg_h264].      |
+| `GOURCE_FILTERS`             | (None)                               | Custom FFmpeg filter string to apply to the Gource video stream *before* logo/date overlays.                |
+| `GLOBAL_FILTERS`             | (None)                               | Custom FFmpeg filter string to apply to the *final* composed video.                                         |
+| `XVFB_WHD`                   | (Derived from `VIDEO_RESOLUTION`x24) | Xvfb screen width, height, and depth (e.g., `1280x720x24`).                                                |
+<!-- Removed variables like H264_LEVEL, GOURCE_FPS (use VIDEO_FRAMERATE), OVERLAY_FONT_COLOR, GOURCE_TIME_SCALE, GOURCE_DIR_DEPTH, GOURCE_FILENAME_TIME, GOURCE_MAX_USER_SPEED, INVERT_COLORS as they are not directly implemented or have better alternatives -->
+
+## Local Build
+
+To build the Docker image locally, clone this repository and run:
+
+```shell
+make build
+```
+This will build an image tagged as `utensils/envisaged:latest`. You can then use `make run` to test it (see `Makefile` for details).
 
 [gource]: https://github.com/acaudwell/Gource
-
 [ffmpeg_home]: https://www.ffmpeg.org/
-
+[ffmpeg_h264]: https://trac.ffmpeg.org/wiki/Encode/H.264
 [xvfb]: https://www.x.org/archive/X11R7.6/doc/man/man1/Xvfb.1.xhtml
-
 [mesa]: https://www.mesa3d.org/llvmpipe.html
-
-[ffmpeg]: https://trac.ffmpeg.org/wiki/Encode/H.264
-
-[utensils/opengl]: https://github.com/utensils/docker-opengl
-
 [elixir-school]: https://github.com/elixirschool/elixirschool
-
 [kubernetes]: https://github.com/kubernetes/kubernetes
-
 [elixir]: https://elixir-lang.org/

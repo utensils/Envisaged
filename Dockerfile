@@ -1,101 +1,71 @@
-# Envisaged - Dockerized Gource Visualizations
-#
-# VERSION 0.1.7
-ARG BASE_IMAGE=utensils/opengl:stable
-FROM ${BASE_IMAGE}
+# 1. Set Base Image and Working Directory
+FROM python:3.9-alpine
+WORKDIR /app
 
-# Install all needed runtime dependencies.
-RUN set -xe; \
-    apk --update add --no-cache --virtual .runtime-deps \
+# 2. Install System Dependencies
+RUN apk update && \
+    apk add --no-cache \
         bash \
         ffmpeg \
         git \
         gource \
         imagemagick \
-        lighttpd \
-        py3-pip \
-        python3 \
-        subversion \
-        wget; \
-    pip3 install --upgrade \
-        google-api-python-client \
-        progressbar2; \
-    cd /var/tmp; \
-    wget https://github.com/tokland/youtube-upload/archive/master.zip; \
-    unzip master.zip; \
-    cd youtube-upload-master; \
-    python3 setup.py install; \
-    cd /var/tmp; \
-    rm -rf youtube-upload-master; \
-    mkdir -p /visualization; \
-    cd /visualization; \
-    mkdir -p /visualization/video; \
-    mkdir -p /visualization/html; \
-    mkdir -p /visualization/avatars; \
-    cd /visualization/html; \
-    wget "https://github.com/twbs/bootstrap/releases/download/v4.0.0/bootstrap-4.0.0-dist.zip"; \
-    unzip bootstrap-4.0.0-dist.zip; \
-    rm bootstrap-4.0.0-dist.zip; \
-    wget "https://github.com/jquery/jquery/archive/3.3.1.zip"; \
-    unzip 3.3.1.zip; \
-    rm 3.3.1.zip; \
-    mv jquery-3.3.1/dist/* /visualization/html/js/; \
-    rm -rf 3.3.1;
+        xvfb \
+        mesa-gl \
+        wget && \
+    rm -rf /var/cache/apk/*
 
-# Copy our assets into image.
-COPY ./docker-entrypoint.sh /usr/local/bin/entrypoint.sh
-COPY . /visualization/
+# 3. Copy Application Files
+COPY requirements.txt /app/requirements.txt
+COPY envisaged.py /app/envisaged.py
+# COPY ./html /app/html # Removed
 
-# Set our working directory.
-WORKDIR /visualization
+# 4. Install Python Dependencies
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Labels and metadata.
-ARG VCS_REF
-ARG BUILD_DATE
-ARG VERSION
-LABEL \
-    org.opencontainers.image.authors="James Brink <brink.james@gmail.com>" \
-    org.opencontainers.image.created="${BUILD_DATE}" \
-    org.opencontainers.image.description="Envisaged ${VERSION} - Dockerized Gource Visualizations." \
-    org.opencontainers.image.revision="${VCS_REF}" \
-    org.opencontainers.image.source="https://github.com/utensils/Envisaged" \
-    org.opencontainers.image.title="Envisaged ${VERSION}" \
-    org.opencontainers.image.vendor="Utensils" \
-    org.opencontainers.image.version="${VERSION}"
+# 5. Adjust File Permissions (if necessary)
+RUN chmod +x envisaged.py
 
-# Set our environment variables.
-ENV \
-    DISPLAY=":99" \
-    GIT_URL="https://github.com/moby/moby" \
-    GLOBAL_FILTERS="" \
-    GOURCE_AUTO_SKIP_SECONDS="0.5" \
-    GOURCE_BACKGROUND_COLOR="000000" \
-    GOURCE_CAMERA_MODE="overview" \
-    GOURCE_DIR_DEPTH="3" \
-    GOURCE_FILENAME_TIME="2" \
-    GOURCE_FILTERS="" \
-    GOURCE_FONT_SIZE="48" \
-    GOURCE_HIDE_ITEMS="usernames,mouse,date,filenames" \
-    GOURCE_MAX_USER_SPEED="500" \
-    GOURCE_SECONDS_PER_DAY="0.1" \
-    GOURCE_TEXT_COLOR="FFFFFF" \
-    GOURCE_TIME_SCALE="1.5" \
-    GOURCE_TITLE="Software Development" \
-    GOURCE_USER_IMAGE_DIR="/visualization/avatars" \
-    GOURCE_USER_SCALE="1.5" \
-    H264_CRF="23" \
-    H264_LEVEL="5.1" \
-    H264_PRESET="medium" \
-    INVERT_COLORS="false" \
-    LOGO_URL="" \
-    OVERLAY_FONT_COLOR="0f5ca8" \
-    TEMPLATE="border" \
-    VIDEO_RESOLUTION="1080p" \
-    XVFB_WHD="3840x2160x24" \
-    GOURCE_FPS="60"
+# 6. Set Environment Variables
+ENV VISUALIZATION_DIR /visualization
+ENV DISPLAY_NUM 99
+ENV DISPLAY :${DISPLAY_NUM}
+ENV XVFB_WHD "1280x720x24"
+ENV VIDEO_RESOLUTION "1280x720"
+# Target video bitrate for FFmpeg
+ENV VIDEO_BITRATE "5M"
+# Framerate for Gource and FFmpeg
+ENV VIDEO_FRAMERATE "25"
+# 'border' or 'none'
+ENV TEMPLATE "none"
+ENV GOURCE_SECONDS_PER_DAY "0.1"
+ENV GOURCE_AUTO_SKIP_SECONDS "0.1"
+# Inactivity period in seconds to hide files. 0 to disable.
+ENV GOURCE_FILE_IDLE_TIME "0"
+# Max number of files or 0 for unlimited
+ENV GOURCE_MAX_FILES "0"
+# Path to user avatar images
+ENV GOURCE_USER_IMAGE_DIR "/visualization/avatars"
+# Note: GOURCE_TITLE, GOURCE_LOGO, GOURCE_FONT_SIZE etc. are fetched by envisaged.py directly from environment if set.
+# FFmpeg H.264 preset
+ENV H264_PRESET "medium"
+# FFmpeg H.264 Constant Rate Factor
+ENV H264_CRF "23"
+# Note: GOURCE_FILTERS & GLOBAL_FILTERS are also fetched by envisaged.py from environment if set.
+# Example (do not uncomment here, set in docker run):
+# ENV GOURCE_FILTERS="speeD=2.0,scale=720:-1"
+# ENV GLOBAL_FILTERS="eq=contrast=1.1:brightness=0.1"
 
-# Expose port 80 to serve mp4 video over HTTP.
-EXPOSE 80
+# 7. Expose Port
+# EXPOSE 80 # Removed
 
-# Set our entrypoint.
-CMD ["/usr/local/bin/entrypoint.sh"]
+# 8. Set Entrypoint/Command
+CMD ["python", "/app/envisaged.py"]
+
+# 9. Labels
+LABEL org.opencontainers.image.title="Envisaged Gource Visualization"
+LABEL org.opencontainers.image.description="Automated Gource visualization generator"
+# Placeholder
+LABEL org.opencontainers.image.source="https://github.com/YOUR_REPO_HERE"
+# Placeholder
+LABEL maintainer="Your Name <you@example.com>"
