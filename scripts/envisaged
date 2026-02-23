@@ -14,9 +14,15 @@ Options:
   -r, --resolution <preset>     2160p | 1440p | 1080p | 720p (default: 1080p)
   -f, --fps <fps>               25 | 30 | 60 (default: 60)
   -t, --title <text>            Video title
-      --template <name>         none | border | neon | sunset | matrix | blueprint | noir (default: border)
+      --template <name>         none | border | neon | sunset | matrix | blueprint | noir |
+                                 compare-panel | compare-neon | compare-blueprint | compare-matrix | compare-noir |
+                                 split-quad | split-vertical | split-triple | split-focus | split-matrix
       --logo <path-or-url>      Optional logo image (local path or URL)
       --multi-dir <path>        Merge multiple repos from a directory
+
+Compare mode options:
+      --sync-timing <mode>      auto | true | false (default: auto)
+      --sync-span <seconds>     Normalized timeline span for compare mode (default: 31536000)
 
 Advanced:
       --seconds-per-day <num>   (default: 0.12)
@@ -30,7 +36,7 @@ Examples:
   envisaged .
   envisaged -o demo.mp4 -r 720p -f 30 -t "Envisaged Evolution" .
   envisaged --logo ./logo.png https://github.com/utensils/Envisaged.git
-  envisaged --multi-dir ~/src -t "My Organization History"
+  envisaged --multi-dir ~/Projects/utensils --template compare-panel -t "Nix Gen Repos"
 EOF
 }
 
@@ -42,6 +48,8 @@ TEMPLATE="border"
 LOGO_INPUT=""
 MULTI_DIR=""
 INPUT_REPO=""
+SYNC_TIMING="auto"
+SYNC_SPAN="31536000"
 
 GOURCE_SECONDS_PER_DAY="0.12"
 GOURCE_TIME_SCALE="1.6"
@@ -52,45 +60,24 @@ H264_PRESET="medium"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    -h|--help)
-      usage
-      exit 0
-      ;;
-    -o|--output)
-      OUTPUT="$2"; shift 2 ;;
-    -r|--resolution)
-      VIDEO_RESOLUTION="$2"; shift 2 ;;
-    -f|--fps)
-      GOURCE_FPS="$2"; shift 2 ;;
-    -t|--title)
-      GOURCE_TITLE="$2"; shift 2 ;;
-    --template)
-      TEMPLATE="$2"; shift 2 ;;
-    --logo)
-      LOGO_INPUT="$2"; shift 2 ;;
-    --multi-dir)
-      MULTI_DIR="$2"; shift 2 ;;
-    --seconds-per-day)
-      GOURCE_SECONDS_PER_DAY="$2"; shift 2 ;;
-    --time-scale)
-      GOURCE_TIME_SCALE="$2"; shift 2 ;;
-    --user-scale)
-      GOURCE_USER_SCALE="$2"; shift 2 ;;
-    --auto-skip)
-      GOURCE_AUTO_SKIP="$2"; shift 2 ;;
-    --crf)
-      H264_CRF="$2"; shift 2 ;;
-    --preset)
-      H264_PRESET="$2"; shift 2 ;;
-    --)
-      shift
-      break
-      ;;
-    -*)
-      echo "Unknown option: $1" >&2
-      usage >&2
-      exit 1
-      ;;
+    -h|--help) usage; exit 0 ;;
+    -o|--output) OUTPUT="$2"; shift 2 ;;
+    -r|--resolution) VIDEO_RESOLUTION="$2"; shift 2 ;;
+    -f|--fps) GOURCE_FPS="$2"; shift 2 ;;
+    -t|--title) GOURCE_TITLE="$2"; shift 2 ;;
+    --template) TEMPLATE="$2"; shift 2 ;;
+    --logo) LOGO_INPUT="$2"; shift 2 ;;
+    --multi-dir) MULTI_DIR="$2"; shift 2 ;;
+    --sync-timing) SYNC_TIMING="$2"; shift 2 ;;
+    --sync-span) SYNC_SPAN="$2"; shift 2 ;;
+    --seconds-per-day) GOURCE_SECONDS_PER_DAY="$2"; shift 2 ;;
+    --time-scale) GOURCE_TIME_SCALE="$2"; shift 2 ;;
+    --user-scale) GOURCE_USER_SCALE="$2"; shift 2 ;;
+    --auto-skip) GOURCE_AUTO_SKIP="$2"; shift 2 ;;
+    --crf) H264_CRF="$2"; shift 2 ;;
+    --preset) H264_PRESET="$2"; shift 2 ;;
+    --) shift; break ;;
+    -*) echo "Unknown option: $1" >&2; usage >&2; exit 1 ;;
     *)
       if [[ -z "${INPUT_REPO}" ]]; then
         INPUT_REPO="$1"
@@ -104,11 +91,9 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-if [[ $# -gt 0 ]]; then
-  if [[ -z "${INPUT_REPO}" ]]; then
-    INPUT_REPO="$1"
-    shift
-  fi
+if [[ $# -gt 0 && -z "${INPUT_REPO}" ]]; then
+  INPUT_REPO="$1"
+  shift
 fi
 
 if [[ $# -gt 0 ]]; then
@@ -132,27 +117,45 @@ case "${VIDEO_RESOLUTION}" in
   1440p) WIDTH=2560; HEIGHT=1440 ;;
   1080p) WIDTH=1920; HEIGHT=1080 ;;
   720p)  WIDTH=1280; HEIGHT=720 ;;
-  *)
-    echo "Unsupported resolution: ${VIDEO_RESOLUTION}" >&2
-    exit 1
-    ;;
+  *) echo "Unsupported resolution: ${VIDEO_RESOLUTION}" >&2; exit 1 ;;
 esac
 
 case "${GOURCE_FPS}" in
   25|30|60) ;;
-  *)
-    echo "Unsupported fps: ${GOURCE_FPS} (supported: 25,30,60)" >&2
-    exit 1
-    ;;
+  *) echo "Unsupported fps: ${GOURCE_FPS} (supported: 25,30,60)" >&2; exit 1 ;;
 esac
 
 case "${TEMPLATE}" in
-  none|border|neon|sunset|matrix|blueprint|noir) ;;
-  *)
-    echo "Unsupported template: ${TEMPLATE} (supported: none,border,neon,sunset,matrix,blueprint,noir)" >&2
-    exit 1
-    ;;
+  none|border|neon|sunset|matrix|blueprint|noir|compare-panel|compare-neon|compare-blueprint|compare-matrix|compare-noir|split-quad|split-vertical|split-triple|split-focus|split-matrix) ;;
+  *) echo "Unsupported template: ${TEMPLATE}" >&2; exit 1 ;;
 esac
+
+case "${SYNC_TIMING}" in
+  auto|true|false) ;;
+  *) echo "Unsupported --sync-timing value: ${SYNC_TIMING}" >&2; exit 1 ;;
+esac
+
+if ! [[ "${SYNC_SPAN}" =~ ^[0-9]+$ ]]; then
+  echo "--sync-span must be an integer number of seconds" >&2
+  exit 1
+fi
+
+is_compare_template=false
+is_split_template=false
+case "${TEMPLATE}" in
+  compare-*) is_compare_template=true ;;
+esac
+case "${TEMPLATE}" in
+  split-*) is_split_template=true ;;
+esac
+
+if [[ "${SYNC_TIMING}" == "auto" ]]; then
+  if [[ -n "${MULTI_DIR}" && ( "${is_compare_template}" == true || "${is_split_template}" == true ) ]]; then
+    SYNC_TIMING="true"
+  else
+    SYNC_TIMING="false"
+  fi
+fi
 
 workdir="$(mktemp -d)"
 cleanup() { rm -rf "${workdir}"; }
@@ -160,6 +163,8 @@ trap cleanup EXIT
 
 log_dir="${workdir}/logs"
 mkdir -p "${log_dir}"
+
+declare -a REPO_NAMES=()
 
 clone_or_use_repo() {
   local src="$1"
@@ -180,6 +185,26 @@ clone_or_use_repo() {
   printf -v "$out_var" '%s' "$repo_dir"
 }
 
+normalize_log_timestamps() {
+  local in_log="$1"
+  local out_log="$2"
+  local sync_span="$3"
+  local base_epoch=946684800
+
+  local min_ts max_ts
+  min_ts=$(awk -F'|' 'NR==1{m=$1} $1<m{m=$1} END{print m+0}' "$in_log")
+  max_ts=$(awk -F'|' 'NR==1{m=$1} $1>m{m=$1} END{print m+0}' "$in_log")
+
+  awk -F'|' -v OFS='|' -v min="$min_ts" -v max="$max_ts" -v target="$sync_span" -v base="$base_epoch" '
+    {
+      span = max - min;
+      if (span <= 0) span = 1;
+      t = int(((($1 - min) / span) * target) + base);
+      print t, $2, $3, $4;
+    }
+  ' "$in_log" > "$out_log"
+}
+
 build_single_log() {
   local repo_dir="$1"
   local out_log="$2"
@@ -196,11 +221,22 @@ build_multi_log() {
     if [[ -d "$d/.git" ]]; then
       local name
       name="$(basename "$d")"
-      local lg="${log_dir}/${name}.log"
+      REPO_NAMES+=("$name")
+
+      local raw_log="${log_dir}/${name}.raw.log"
+      local prepared_log="${log_dir}/${name}.log"
+
       echo "Collecting: $name"
-      gource --output-custom-log "$lg" "$d" >/dev/null
-      sed -i -E "s#^([0-9]+\|[^|]+\|)#\1/${name}#" "$lg"
-      tmp_list+=("$lg")
+      gource --output-custom-log "$raw_log" "$d" >/dev/null
+
+      if [[ "${SYNC_TIMING}" == "true" ]]; then
+        normalize_log_timestamps "$raw_log" "$prepared_log" "$SYNC_SPAN"
+      else
+        cp "$raw_log" "$prepared_log"
+      fi
+
+      sed -i -E "s#^([0-9]+\|[^|]+\|[^|]+\|)#\1/${name}#" "$prepared_log"
+      tmp_list+=("$prepared_log")
     fi
   done
   shopt -u nullglob
@@ -211,6 +247,21 @@ build_multi_log() {
   fi
 
   cat "${tmp_list[@]}" | sort -n > "$out_log"
+}
+
+build_legend_file() {
+  local f="$1"
+  {
+    echo "COMPARE LEGEND"
+    echo
+    for repo in "${REPO_NAMES[@]}"; do
+      echo "• $repo"
+    done
+    if [[ "${SYNC_TIMING}" == "true" ]]; then
+      echo
+      echo "timing: unified"
+    fi
+  } > "$f"
 }
 
 DEVLOG="${workdir}/development.log"
@@ -237,7 +288,7 @@ if [[ -n "${LOGO_INPUT}" ]]; then
   fi
 fi
 
-if [[ "${TEMPLATE}" == "border" || "${TEMPLATE}" == "neon" || "${TEMPLATE}" == "blueprint" ]]; then
+if [[ "${TEMPLATE}" == "border" || "${TEMPLATE}" == "neon" || "${TEMPLATE}" == "blueprint" || "${TEMPLATE}" == compare-* || "${TEMPLATE}" == split-* ]]; then
   FRAME=26
 else
   FRAME=0
@@ -249,7 +300,7 @@ PIPE="${workdir}/gource.pipe"
 mkfifo "$PIPE"
 
 echo "Rendering: ${OUTPUT}"
-echo "Resolution: ${WIDTH}x${HEIGHT} (${VIDEO_RESOLUTION}), fps=${GOURCE_FPS}, template=${TEMPLATE}"
+echo "Resolution: ${WIDTH}x${HEIGHT} (${VIDEO_RESOLUTION}), fps=${GOURCE_FPS}, template=${TEMPLATE}, sync=${SYNC_TIMING}"
 
 SDL_VIDEODRIVER=x11 \
 xvfb-run -a -s "-screen 0 ${WIDTH}x${HEIGHT}x24" \
@@ -276,7 +327,11 @@ xvfb-run -a -s "-screen 0 ${WIDTH}x${HEIGHT}x24" \
 
 GOURCE_PID=$!
 
+USE_COMPLEX=false
 FILTER=""
+COMPLEX_FILTER=""
+FINAL_LABEL=""
+
 case "${TEMPLATE}" in
   none)
     FILTER=""
@@ -299,23 +354,110 @@ case "${TEMPLATE}" in
   noir)
     FILTER="hue=s=0,eq=contrast=1.25:brightness=-0.04,gblur=sigma=0.45,vignette=PI/5,drawbox=x=0:y=0:w=iw:h=ih:color=#ffffff@0.12:t=2"
     ;;
+  compare-panel)
+    FILTER="pad=${WIDTH}:${HEIGHT}:${FRAME}:${FRAME}:#1a1a21,eq=saturation=1.05:contrast=1.06,drawbox=x=0:y=0:w=iw:h=ih:color=#90b4ff@0.35:t=4"
+    ;;
+  compare-neon)
+    FILTER="pad=${WIDTH}:${HEIGHT}:${FRAME}:${FRAME}:#03060c,eq=saturation=1.4:contrast=1.2,drawgrid=w=70:h=70:t=1:c=#00ffd0@0.1,drawbox=x=0:y=0:w=iw:h=ih:color=#00ffd0@0.45:t=5"
+    ;;
+  compare-blueprint)
+    FILTER="pad=${WIDTH}:${HEIGHT}:${FRAME}:${FRAME}:#0b1e3f,colorchannelmixer=rr=0.10:rg=0.12:rb=0.30:gr=0.12:gg=0.50:gb=0.75:br=0.35:bg=0.55:bb=1.00,eq=saturation=0.8:contrast=1.12,drawgrid=w=84:h=84:t=1:c=#9fd0ff@0.16,drawbox=x=0:y=0:w=iw:h=ih:color=#9fd0ff@0.45:t=5"
+    ;;
+  compare-matrix)
+    FILTER="hue=s=0,colorchannelmixer=rr=0:rg=0:rb=0:gr=0.17:gg=1.0:gb=0.05:br=0:bg=0:bb=0,noise=alls=6:allf=t,drawgrid=w=64:h=28:t=1:c=#00ff66@0.09,drawbox=x=0:y=0:w=iw:h=ih:color=#00ff66@0.28:t=4"
+    ;;
+  compare-noir)
+    FILTER="hue=s=0,eq=contrast=1.25:brightness=-0.04,gblur=sigma=0.45,vignette=PI/5,drawbox=x=0:y=0:w=iw:h=ih:color=#ffffff@0.22:t=3"
+    ;;
+  split-quad)
+    USE_COMPLEX=true
+    COMPLEX_FILTER="[0:v]split=4[a][b][c][d];[a]scale=iw/2:ih/2,eq=saturation=1.25:contrast=1.1[a1];[b]scale=iw/2:ih/2,hue=s=0,eq=contrast=1.2[b1];[c]scale=iw/2:ih/2,colorbalance=rs=.12:gs=-.02:bs=-.08[c1];[d]scale=iw/2:ih/2,colorchannelmixer=rr=0:rg=0:rb=0:gr=0.2:gg=1.0:gb=0.05:br=0:bg=0:bb=0[d1];[a1][b1][c1][d1]xstack=inputs=4:layout=0_0|w0_0|0_h0|w0_h0[outv]"
+    FINAL_LABEL="outv"
+    ;;
+  split-vertical)
+    USE_COMPLEX=true
+    COMPLEX_FILTER="[0:v]split=2[a][b];[a]eq=saturation=1.3:contrast=1.12[a1];[b]hue=s=0,eq=contrast=1.25[b1];[a1][b1]hstack=inputs=2[outv]"
+    FINAL_LABEL="outv"
+    ;;
+  split-triple)
+    USE_COMPLEX=true
+    COMPLEX_FILTER="[0:v]split=3[a][b][c];[a]crop=iw/2:ih:0:0,eq=saturation=1.22:contrast=1.08[a1];[b]crop=iw/4:ih:iw/4:0,hue=s=0,eq=contrast=1.2[b1];[c]crop=iw/4:ih:3*iw/4:0,colorchannelmixer=rr=0:rg=0:rb=0:gr=0.18:gg=1.0:gb=0.05:br=0:bg=0:bb=0[c1];[a1][b1][c1]hstack=inputs=3[outv]"
+    FINAL_LABEL="outv"
+    ;;
+  split-focus)
+    USE_COMPLEX=true
+    COMPLEX_FILTER="[0:v]split=2[a][b];[a]scale=iw:ih,eq=saturation=1.18:contrast=1.1,drawbox=x=8:y=8:w=iw-16:h=ih-16:color=#87b7ff@0.35:t=3[base];[b]scale=iw/3:ih/3,hue=s=0,eq=contrast=1.24[mini];[base][mini]overlay=W-w-28:28[outv]"
+    FINAL_LABEL="outv"
+    ;;
+  split-matrix)
+    USE_COMPLEX=true
+    COMPLEX_FILTER="[0:v]split=4[a][b][c][d];[a]scale=iw/2:ih/2,colorchannelmixer=rr=0:rg=0:rb=0:gr=0.2:gg=1.0:gb=0.05:br=0:bg=0:bb=0[a1];[b]scale=iw/2:ih/2,colorchannelmixer=rr=0:rg=0:rb=0:gr=0.15:gg=0.9:gb=0.03:br=0:bg=0:bb=0[b1];[c]scale=iw/2:ih/2,colorchannelmixer=rr=0:rg=0:rb=0:gr=0.22:gg=1.05:gb=0.07:br=0:bg=0:bb=0[c1];[d]scale=iw/2:ih/2,colorchannelmixer=rr=0:rg=0:rb=0:gr=0.18:gg=0.95:gb=0.05:br=0:bg=0:bb=0[d1];[a1][b1][c1][d1]xstack=inputs=4:layout=0_0|w0_0|0_h0|w0_h0,drawgrid=w=64:h=28:t=1:c=#00ff66@0.12[outv]"
+    FINAL_LABEL="outv"
+    ;;
 esac
 
-if [[ -n "${LOGO_FILE}" ]]; then
-  if [[ -n "${FILTER}" ]]; then
-    FILTER="${FILTER}[base];[1:v]scale=-1:${HEIGHT}/8[logo];[base][logo]overlay=W-w-40:H-h-40"
+legend_needed=false
+if [[ ${#REPO_NAMES[@]} -gt 0 && ( "${is_compare_template}" == true || "${is_split_template}" == true ) ]]; then
+  legend_needed=true
+fi
+
+if [[ "${legend_needed}" == true ]]; then
+  LEGEND_FILE="${workdir}/legend.txt"
+  build_legend_file "$LEGEND_FILE"
+  legend_h=$((150 + (${#REPO_NAMES[@]} * 34)))
+  legend_filter="drawbox=x=18:y=18:w=460:h=${legend_h}:color=#000000@0.38:t=fill,drawbox=x=18:y=18:w=460:h=${legend_h}:color=#d8e7ff@0.22:t=2,drawtext=textfile=${LEGEND_FILE}:x=34:y=36:fontsize=22:fontcolor=white:line_spacing=10"
+
+  if [[ "${USE_COMPLEX}" == true ]]; then
+    COMPLEX_FILTER="${COMPLEX_FILTER};[${FINAL_LABEL}]${legend_filter}[outleg]"
+    FINAL_LABEL="outleg"
   else
-    FILTER="[1:v]scale=-1:${HEIGHT}/8[logo];[0:v][logo]overlay=W-w-40:H-h-40"
+    if [[ -n "${FILTER}" ]]; then
+      FILTER="${FILTER},${legend_filter}"
+    else
+      FILTER="${legend_filter}"
+    fi
   fi
 fi
 
 if [[ -n "${LOGO_FILE}" ]]; then
-  ffmpeg -y \
-    -r "${GOURCE_FPS}" -f image2pipe -probesize 100M -i "$PIPE" \
-    -i "$LOGO_FILE" \
-    -filter_complex "$FILTER" \
-    -vcodec libx264 -pix_fmt yuv420p -crf "${H264_CRF}" -preset "${H264_PRESET}" -bf 0 \
-    "$OUTPUT"
+  if [[ "${USE_COMPLEX}" == true ]]; then
+    COMPLEX_FILTER="${COMPLEX_FILTER};[1:v]scale=-1:${HEIGHT}/8[logo];[${FINAL_LABEL}][logo]overlay=W-w-40:H-h-40[outlogo]"
+    FINAL_LABEL="outlogo"
+  else
+    if [[ -n "${FILTER}" ]]; then
+      FILTER="${FILTER}[base];[1:v]scale=-1:${HEIGHT}/8[logo];[base][logo]overlay=W-w-40:H-h-40"
+      USE_COMPLEX=true
+      COMPLEX_FILTER="[0:v]${FILTER}[outlogo]"
+      FINAL_LABEL="outlogo"
+    else
+      USE_COMPLEX=true
+      COMPLEX_FILTER="[1:v]scale=-1:${HEIGHT}/8[logo];[0:v][logo]overlay=W-w-40:H-h-40[outlogo]"
+      FINAL_LABEL="outlogo"
+    fi
+  fi
+fi
+
+if [[ "${USE_COMPLEX}" == true ]]; then
+  if [[ -z "${FINAL_LABEL}" ]]; then
+    FINAL_LABEL="outv"
+  fi
+
+  if [[ -n "${LOGO_FILE}" ]]; then
+    ffmpeg -y \
+      -r "${GOURCE_FPS}" -f image2pipe -probesize 100M -i "$PIPE" \
+      -i "$LOGO_FILE" \
+      -filter_complex "$COMPLEX_FILTER" \
+      -map "[${FINAL_LABEL}]" \
+      -vcodec libx264 -pix_fmt yuv420p -crf "${H264_CRF}" -preset "${H264_PRESET}" -bf 0 \
+      "$OUTPUT"
+  else
+    ffmpeg -y \
+      -r "${GOURCE_FPS}" -f image2pipe -probesize 100M -i "$PIPE" \
+      -filter_complex "$COMPLEX_FILTER" \
+      -map "[${FINAL_LABEL}]" \
+      -vcodec libx264 -pix_fmt yuv420p -crf "${H264_CRF}" -preset "${H264_PRESET}" -bf 0 \
+      "$OUTPUT"
+  fi
 else
   if [[ -n "${FILTER}" ]]; then
     ffmpeg -y \

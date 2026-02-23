@@ -17,6 +17,12 @@ No Docker required.
   - `matrix`
   - `blueprint`
   - `noir`
+- Compare templates with legends + unified timing support:
+  - `compare-panel`
+  - `compare-neon`
+  - `compare-blueprint`
+  - `compare-matrix`
+  - `compare-noir`
 - Optional logo overlay (`--logo`)
 
 ## Quick start
@@ -33,6 +39,13 @@ nix run . -- -o kubernetes.mp4 -t "Kubernetes" https://github.com/kubernetes/kub
 
 # Render all repos inside a directory
 nix run . -- --multi-dir ~/Projects -o org-history.mp4 -t "Org History"
+
+# Compare similar repos with unified timing + legend
+nix run . -- --multi-dir ~/Projects/utensils \
+  --template compare-panel \
+  --sync-timing auto \
+  -o compare.mp4 \
+  -t "Repo Family Comparison"
 ```
 
 ## Template showcase examples
