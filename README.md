@@ -4,41 +4,25 @@ Nix-first Git history visualizations powered by **Gource + FFmpeg**.
 
 No Docker required.
 
-## Features
+## Highlights
 
 - Headless rendering via `xvfb-run`
 - Local repo path or remote git URL input
 - Multi-repo mode (`--multi-dir`)
-- Built-in visual templates:
-  - `none`
-  - `border`
-  - `neon`
-  - `sunset`
-  - `matrix`
-  - `blueprint`
-  - `noir`
-- Compare templates with legends + unified timing support:
-  - `compare-panel`
-  - `compare-neon`
-  - `compare-blueprint`
-  - `compare-matrix`
-  - `compare-noir`
-- Intricate split-screen templates:
-  - `split-quad`
-  - `split-vertical`
-  - `split-triple`
-  - `split-focus`
-  - `split-matrix`
-- Relationship templates (for similar project families):
-  - `relation-panel`
-  - `relation-neon`
-  - `relation-blueprint`
-  - `relation-noir`
-  - `relation-sunset`
-- Intelligent sync modes:
-  - `--sync-timing true` (normalized timeline)
-  - `--sync-timing smart` (normalized + blank-log pulse anchors)
+- Professional template families:
+  - **Core:** `none`, `border`, `neon`, `sunset`, `matrix`, `blueprint`, `noir`
+  - **Compare:** `compare-panel`, `compare-neon`, `compare-blueprint`, `compare-matrix`, `compare-noir`
+  - **Split-screen:** `split-quad`, `split-vertical`, `split-triple`, `split-focus`, `split-matrix`
+  - **Relationship:** `relation-panel`, `relation-neon`, `relation-blueprint`, `relation-noir`, `relation-sunset`
+- Intelligent sync modes for multi-repo visuals
 - Optional logo overlay (`--logo`)
+
+## Sync modes
+
+- `--sync-timing false` → keep original log timing
+- `--sync-timing true` → normalized unified timeline
+- `--sync-timing smart` → normalized timeline + blank-log pulse anchors
+- `--sync-timing auto` → automatically uses smart sync for compare/split/relation templates
 
 ## Quick start
 
@@ -54,23 +38,34 @@ nix run . -- -o kubernetes.mp4 -t "Kubernetes" https://github.com/kubernetes/kub
 
 # Render all repos inside a directory
 nix run . -- --multi-dir ~/Projects -o org-history.mp4 -t "Org History"
+```
 
+## Multi-repo examples
+
+```bash
 # Compare similar repos with unified timing + legend
 nix run . -- --multi-dir ~/Projects/utensils \
   --template compare-panel \
-  --sync-timing smart \
+  --sync-timing auto \
   -o compare.mp4 \
   -t "Repo Family Comparison"
 
 # Relationship view (infers similar project lines)
 nix run . -- --multi-dir ~/Projects/utensils \
   --template relation-blueprint \
-  --sync-timing smart \
+  --sync-timing auto \
   -o relations.mp4 \
   -t "Project Relationship Graph"
+
+# Intricate 4-way split view
+nix run . -- --multi-dir ~/Projects/utensils \
+  --template split-quad \
+  --sync-timing auto \
+  -o split-quad.mp4 \
+  -t "Quad Split Comparison"
 ```
 
-## Template showcase examples
+## Style showcase examples
 
 ```bash
 nix run . -- -o neon.mp4 --template neon -r 720p -f 30 -t "Neon" .
@@ -90,7 +85,7 @@ envisaged --help
 ## Notes
 
 - Supported FPS values are constrained by Gource: `25`, `30`, `60`.
-- For best turnaround during iteration, use `-r 720p -f 30`.
+- For fast iteration: `-r 720p -f 30`.
 
 ## License
 
