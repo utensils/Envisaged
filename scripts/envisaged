@@ -170,6 +170,7 @@ log_dir="${workdir}/logs"
 mkdir -p "${log_dir}"
 
 declare -a REPO_NAMES=()
+declare -a REPO_LOGS=()
 
 clone_or_use_repo() {
   local src="$1"
@@ -245,6 +246,37 @@ build_single_log() {
   gource --output-custom-log "$out_log" "$repo_dir" >/dev/null
 }
 
+start_gource_to_pipe() {
+  local log_file="$1"
+  local pipe_file="$2"
+  local render_title="$3"
+
+  SDL_VIDEODRIVER=x11 \
+  xvfb-run -a -s "-screen 0 ${WIDTH}x${HEIGHT}x24" \
+    gource \
+      --seconds-per-day "${GOURCE_SECONDS_PER_DAY}" \
+      --user-scale "${GOURCE_USER_SCALE}" \
+      --time-scale "${GOURCE_TIME_SCALE}" \
+      --auto-skip-seconds "${GOURCE_AUTO_SKIP}" \
+      --title "${render_title}" \
+      --background-colour 000000 \
+      --font-colour FFFFFF \
+      --camera-mode overview \
+      --hide usernames,mouse,date,filenames \
+      --font-size 42 \
+      --dir-name-depth 3 \
+      --filename-time 2 \
+      --max-user-speed 500 \
+      --bloom-multiplier 1.2 \
+      --${INNER_W}x${INNER_H} \
+      --stop-at-end \
+      "$log_file" \
+      -r "${GOURCE_FPS}" \
+      -o - > "$pipe_file" &
+
+  echo $!
+}
+
 build_multi_log() {
   local base_dir="$1"
   local out_log="$2"
@@ -274,6 +306,7 @@ build_multi_log() {
       fi
 
       sed -i -E "s#^([0-9]+\|[^|]+\|[^|]+\|)#\1/${name}#" "$prepared_log"
+      REPO_LOGS+=("$prepared_log")
       tmp_list+=("$prepared_log")
     fi
   done
@@ -383,36 +416,31 @@ fi
 INNER_W=$((WIDTH - (FRAME * 2)))
 INNER_H=$((HEIGHT - (FRAME * 2)))
 
-PIPE="${workdir}/gource.pipe"
-mkfifo "$PIPE"
+declare -a PIPES=()
+declare -a GOURCE_PIDS=()
+declare -a QUAD_REPO_NAMES=()
+USE_QUAD_MULTI_REPOS=false
+
+if [[ "${TEMPLATE}" == "split-quad" && -n "${MULTI_DIR}" && ${#REPO_LOGS[@]} -ge 4 ]]; then
+  USE_QUAD_MULTI_REPOS=true
+  QUAD_REPO_NAMES=("${REPO_NAMES[@]:0:4}")
+  REPO_NAMES=("${QUAD_REPO_NAMES[@]}")
+else
+  PIPE="${workdir}/gource.pipe"
+  mkfifo "$PIPE"
+  PIPES+=("$PIPE")
+  pid_main=$(start_gource_to_pipe "$DEVLOG" "$PIPE" "${GOURCE_TITLE}")
+  GOURCE_PIDS+=("$pid_main")
+fi
 
 echo "Rendering: ${OUTPUT}"
 echo "Resolution: ${WIDTH}x${HEIGHT} (${VIDEO_RESOLUTION}), fps=${GOURCE_FPS}, template=${TEMPLATE}, sync=${SYNC_TIMING}"
-
-SDL_VIDEODRIVER=x11 \
-xvfb-run -a -s "-screen 0 ${WIDTH}x${HEIGHT}x24" \
-  gource \
-    --seconds-per-day "${GOURCE_SECONDS_PER_DAY}" \
-    --user-scale "${GOURCE_USER_SCALE}" \
-    --time-scale "${GOURCE_TIME_SCALE}" \
-    --auto-skip-seconds "${GOURCE_AUTO_SKIP}" \
-    --title "${GOURCE_TITLE}" \
-    --background-colour 000000 \
-    --font-colour FFFFFF \
-    --camera-mode overview \
-    --hide usernames,mouse,date,filenames \
-    --font-size 42 \
-    --dir-name-depth 3 \
-    --filename-time 2 \
-    --max-user-speed 500 \
-    --bloom-multiplier 1.2 \
-    --${INNER_W}x${INNER_H} \
-    --stop-at-end \
-    "$DEVLOG" \
-    -r "${GOURCE_FPS}" \
-    -o - > "$PIPE" &
-
-GOURCE_PID=$!
+if [[ "${USE_QUAD_MULTI_REPOS}" == true ]]; then
+  echo "Quad mode: using 4 distinct repos (${QUAD_REPO_NAMES[*]})"
+  BASE_INPUT_COUNT=4
+else
+  BASE_INPUT_COUNT=${#PIPES[@]}
+fi
 
 USE_COMPLEX=false
 FILTER=""
@@ -473,7 +501,11 @@ case "${TEMPLATE}" in
     ;;
   split-quad)
     USE_COMPLEX=true
-    COMPLEX_FILTER="[0:v]split=4[a][b][c][d];[a]scale=iw/2:ih/2,eq=saturation=1.25:contrast=1.1[a1];[b]scale=iw/2:ih/2,hue=s=0,eq=contrast=1.2[b1];[c]scale=iw/2:ih/2,colorbalance=rs=.12:gs=-.02:bs=-.08[c1];[d]scale=iw/2:ih/2,colorchannelmixer=rr=0:rg=0:rb=0:gr=0.2:gg=1.0:gb=0.05:br=0:bg=0:bb=0[d1];[a1][b1][c1][d1]xstack=inputs=4:layout=0_0|w0_0|0_h0|w0_h0[outv]"
+    if [[ "${USE_QUAD_MULTI_REPOS}" == true ]]; then
+      COMPLEX_FILTER="[0:v]scale=iw/2:ih/2,eq=saturation=1.25:contrast=1.1[a1];[1:v]scale=iw/2:ih/2,hue=s=0,eq=contrast=1.2[b1];[2:v]scale=iw/2:ih/2,colorbalance=rs=.12:gs=-.02:bs=-.08[c1];[3:v]scale=iw/2:ih/2,colorchannelmixer=rr=0:rg=0:rb=0:gr=0.2:gg=1.0:gb=0.05:br=0:bg=0:bb=0[d1];[a1][b1][c1][d1]xstack=inputs=4:layout=0_0|w0_0|0_h0|w0_h0[outv]"
+    else
+      COMPLEX_FILTER="[0:v]split=4[a][b][c][d];[a]scale=iw/2:ih/2,eq=saturation=1.25:contrast=1.1[a1];[b]scale=iw/2:ih/2,hue=s=0,eq=contrast=1.2[b1];[c]scale=iw/2:ih/2,colorbalance=rs=.12:gs=-.02:bs=-.08[c1];[d]scale=iw/2:ih/2,colorchannelmixer=rr=0:rg=0:rb=0:gr=0.2:gg=1.0:gb=0.05:br=0:bg=0:bb=0[d1];[a1][b1][c1][d1]xstack=inputs=4:layout=0_0|w0_0|0_h0|w0_h0[outv]"
+    fi
     FINAL_LABEL="outv"
     ;;
   split-vertical)
@@ -540,59 +572,120 @@ if [[ "${is_relation_template}" == true && ${#REPO_NAMES[@]} -gt 1 ]]; then
 fi
 
 if [[ -n "${LOGO_FILE}" ]]; then
+  logo_input_index="${BASE_INPUT_COUNT}"
   if [[ "${USE_COMPLEX}" == true ]]; then
-    COMPLEX_FILTER="${COMPLEX_FILTER};[1:v]scale=-1:${HEIGHT}/8[logo];[${FINAL_LABEL}][logo]overlay=W-w-40:H-h-40[outlogo]"
+    COMPLEX_FILTER="${COMPLEX_FILTER};[${logo_input_index}:v]scale=-1:${HEIGHT}/8[logo];[${FINAL_LABEL}][logo]overlay=W-w-40:H-h-40[outlogo]"
     FINAL_LABEL="outlogo"
   else
     if [[ -n "${FILTER}" ]]; then
-      FILTER="${FILTER}[base];[1:v]scale=-1:${HEIGHT}/8[logo];[base][logo]overlay=W-w-40:H-h-40"
+      FILTER="${FILTER}[base];[${logo_input_index}:v]scale=-1:${HEIGHT}/8[logo];[base][logo]overlay=W-w-40:H-h-40"
       USE_COMPLEX=true
       COMPLEX_FILTER="[0:v]${FILTER}[outlogo]"
       FINAL_LABEL="outlogo"
     else
       USE_COMPLEX=true
-      COMPLEX_FILTER="[1:v]scale=-1:${HEIGHT}/8[logo];[0:v][logo]overlay=W-w-40:H-h-40[outlogo]"
+      COMPLEX_FILTER="[${logo_input_index}:v]scale=-1:${HEIGHT}/8[logo];[0:v][logo]overlay=W-w-40:H-h-40[outlogo]"
       FINAL_LABEL="outlogo"
     fi
   fi
 fi
 
-if [[ "${USE_COMPLEX}" == true ]]; then
+if [[ "${USE_QUAD_MULTI_REPOS}" == true ]]; then
+  declare -a QUAD_TMP_VIDEOS=()
+
+  for i in 0 1 2 3; do
+    qv="${workdir}/quad-src-${i}.mp4"
+    QUAD_TMP_VIDEOS+=("$qv")
+
+    SDL_VIDEODRIVER=x11 \
+    xvfb-run -a -s "-screen 0 ${WIDTH}x${HEIGHT}x24" \
+      gource \
+        --seconds-per-day "${GOURCE_SECONDS_PER_DAY}" \
+        --user-scale "${GOURCE_USER_SCALE}" \
+        --time-scale "${GOURCE_TIME_SCALE}" \
+        --auto-skip-seconds "${GOURCE_AUTO_SKIP}" \
+        --title "${GOURCE_TITLE} — ${QUAD_REPO_NAMES[$i]}" \
+        --background-colour 000000 \
+        --font-colour FFFFFF \
+        --camera-mode overview \
+        --hide usernames,mouse,date,filenames \
+        --font-size 42 \
+        --dir-name-depth 3 \
+        --filename-time 2 \
+        --max-user-speed 500 \
+        --bloom-multiplier 1.2 \
+        --${INNER_W}x${INNER_H} \
+        --stop-at-end \
+        "${REPO_LOGS[$i]}" \
+        -r "${GOURCE_FPS}" \
+        -o - | \
+      ffmpeg -y \
+        -r "${GOURCE_FPS}" -f image2pipe -probesize 100M -i - \
+        -vcodec libx264 -pix_fmt yuv420p -crf "${H264_CRF}" -preset "${H264_PRESET}" -bf 0 \
+        "$qv"
+  done
+
   if [[ -z "${FINAL_LABEL}" ]]; then
     FINAL_LABEL="outv"
   fi
 
+  ffmpeg_cmd=(ffmpeg -y)
+  for qv in "${QUAD_TMP_VIDEOS[@]}"; do
+    ffmpeg_cmd+=( -i "$qv" )
+  done
   if [[ -n "${LOGO_FILE}" ]]; then
-    ffmpeg -y \
-      -r "${GOURCE_FPS}" -f image2pipe -probesize 100M -i "$PIPE" \
-      -i "$LOGO_FILE" \
-      -filter_complex "$COMPLEX_FILTER" \
-      -map "[${FINAL_LABEL}]" \
-      -vcodec libx264 -pix_fmt yuv420p -crf "${H264_CRF}" -preset "${H264_PRESET}" -bf 0 \
-      "$OUTPUT"
-  else
-    ffmpeg -y \
-      -r "${GOURCE_FPS}" -f image2pipe -probesize 100M -i "$PIPE" \
-      -filter_complex "$COMPLEX_FILTER" \
-      -map "[${FINAL_LABEL}]" \
-      -vcodec libx264 -pix_fmt yuv420p -crf "${H264_CRF}" -preset "${H264_PRESET}" -bf 0 \
-      "$OUTPUT"
+    ffmpeg_cmd+=( -i "$LOGO_FILE" )
   fi
-else
-  if [[ -n "${FILTER}" ]]; then
-    ffmpeg -y \
-      -r "${GOURCE_FPS}" -f image2pipe -probesize 100M -i "$PIPE" \
-      -vf "$FILTER" \
-      -vcodec libx264 -pix_fmt yuv420p -crf "${H264_CRF}" -preset "${H264_PRESET}" -bf 0 \
-      "$OUTPUT"
-  else
-    ffmpeg -y \
-      -r "${GOURCE_FPS}" -f image2pipe -probesize 100M -i "$PIPE" \
-      -vcodec libx264 -pix_fmt yuv420p -crf "${H264_CRF}" -preset "${H264_PRESET}" -bf 0 \
-      "$OUTPUT"
-  fi
-fi
 
-wait "$GOURCE_PID"
+  ffmpeg_cmd+=(
+    -filter_complex "$COMPLEX_FILTER"
+    -map "[${FINAL_LABEL}]"
+    -vcodec libx264 -pix_fmt yuv420p -crf "${H264_CRF}" -preset "${H264_PRESET}" -bf 0
+    "$OUTPUT"
+  )
+
+  "${ffmpeg_cmd[@]}"
+else
+  if [[ "${USE_COMPLEX}" == true ]]; then
+    if [[ -z "${FINAL_LABEL}" ]]; then
+      FINAL_LABEL="outv"
+    fi
+
+    ffmpeg_cmd=(ffmpeg -y)
+    for p in "${PIPES[@]}"; do
+      ffmpeg_cmd+=( -r "${GOURCE_FPS}" -f image2pipe -probesize 100M -i "$p" )
+    done
+
+    if [[ -n "${LOGO_FILE}" ]]; then
+      ffmpeg_cmd+=( -i "$LOGO_FILE" )
+    fi
+
+    ffmpeg_cmd+=(
+      -filter_complex "$COMPLEX_FILTER"
+      -map "[${FINAL_LABEL}]"
+      -vcodec libx264 -pix_fmt yuv420p -crf "${H264_CRF}" -preset "${H264_PRESET}" -bf 0
+      "$OUTPUT"
+    )
+
+    "${ffmpeg_cmd[@]}"
+  else
+    if [[ -n "${FILTER}" ]]; then
+      ffmpeg -y \
+        -r "${GOURCE_FPS}" -f image2pipe -probesize 100M -i "${PIPES[0]}" \
+        -vf "$FILTER" \
+        -vcodec libx264 -pix_fmt yuv420p -crf "${H264_CRF}" -preset "${H264_PRESET}" -bf 0 \
+        "$OUTPUT"
+    else
+      ffmpeg -y \
+        -r "${GOURCE_FPS}" -f image2pipe -probesize 100M -i "${PIPES[0]}" \
+        -vcodec libx264 -pix_fmt yuv420p -crf "${H264_CRF}" -preset "${H264_PRESET}" -bf 0 \
+        "$OUTPUT"
+    fi
+  fi
+
+  for pid in "${GOURCE_PIDS[@]}"; do
+    wait "$pid"
+  done
+fi
 
 echo "Done: ${OUTPUT}"

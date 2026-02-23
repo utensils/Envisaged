@@ -57,7 +57,7 @@ nix run . -- --multi-dir ~/Projects/utensils \
   -o relations.mp4 \
   -t "Project Relationship Graph"
 
-# Intricate 4-way split view
+# Intricate 4-way split view (uses first 4 repos as distinct panes)
 nix run . -- --multi-dir ~/Projects/utensils \
   --template split-quad \
   --sync-timing auto \
