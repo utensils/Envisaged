@@ -1,0 +1,336 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  cat <<'EOF'
+Envisaged (Nix-first)
+
+Usage:
+  envisaged [options] <repo-path-or-git-url>
+  envisaged [options] --multi-dir <directory-containing-git-repos>
+
+Options:
+  -o, --output <path>           Output file path (default: output.mp4)
+  -r, --resolution <preset>     2160p | 1440p | 1080p | 720p (default: 1080p)
+  -f, --fps <fps>               25 | 30 | 60 (default: 60)
+  -t, --title <text>            Video title
+      --template <name>         none | border | neon | sunset | matrix | blueprint | noir (default: border)
+      --logo <path-or-url>      Optional logo image (local path or URL)
+      --multi-dir <path>        Merge multiple repos from a directory
+
+Advanced:
+      --seconds-per-day <num>   (default: 0.12)
+      --time-scale <num>        0.0 - 4.0 (default: 1.6)
+      --user-scale <num>        (default: 1.35)
+      --auto-skip <num>         (default: 0.5)
+      --crf <num>               x264 CRF (default: 22)
+      --preset <name>           x264 preset (default: medium)
+
+Examples:
+  envisaged .
+  envisaged -o demo.mp4 -r 720p -f 30 -t "Envisaged Evolution" .
+  envisaged --logo ./logo.png https://github.com/utensils/Envisaged.git
+  envisaged --multi-dir ~/src -t "My Organization History"
+EOF
+}
+
+OUTPUT="output.mp4"
+VIDEO_RESOLUTION="1080p"
+GOURCE_FPS="60"
+GOURCE_TITLE="Software Development"
+TEMPLATE="border"
+LOGO_INPUT=""
+MULTI_DIR=""
+INPUT_REPO=""
+
+GOURCE_SECONDS_PER_DAY="0.12"
+GOURCE_TIME_SCALE="1.6"
+GOURCE_USER_SCALE="1.35"
+GOURCE_AUTO_SKIP="0.5"
+H264_CRF="22"
+H264_PRESET="medium"
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    -o|--output)
+      OUTPUT="$2"; shift 2 ;;
+    -r|--resolution)
+      VIDEO_RESOLUTION="$2"; shift 2 ;;
+    -f|--fps)
+      GOURCE_FPS="$2"; shift 2 ;;
+    -t|--title)
+      GOURCE_TITLE="$2"; shift 2 ;;
+    --template)
+      TEMPLATE="$2"; shift 2 ;;
+    --logo)
+      LOGO_INPUT="$2"; shift 2 ;;
+    --multi-dir)
+      MULTI_DIR="$2"; shift 2 ;;
+    --seconds-per-day)
+      GOURCE_SECONDS_PER_DAY="$2"; shift 2 ;;
+    --time-scale)
+      GOURCE_TIME_SCALE="$2"; shift 2 ;;
+    --user-scale)
+      GOURCE_USER_SCALE="$2"; shift 2 ;;
+    --auto-skip)
+      GOURCE_AUTO_SKIP="$2"; shift 2 ;;
+    --crf)
+      H264_CRF="$2"; shift 2 ;;
+    --preset)
+      H264_PRESET="$2"; shift 2 ;;
+    --)
+      shift
+      break
+      ;;
+    -*)
+      echo "Unknown option: $1" >&2
+      usage >&2
+      exit 1
+      ;;
+    *)
+      if [[ -z "${INPUT_REPO}" ]]; then
+        INPUT_REPO="$1"
+      else
+        echo "Unexpected extra argument: $1" >&2
+        usage >&2
+        exit 1
+      fi
+      shift
+      ;;
+  esac
+done
+
+if [[ $# -gt 0 ]]; then
+  if [[ -z "${INPUT_REPO}" ]]; then
+    INPUT_REPO="$1"
+    shift
+  fi
+fi
+
+if [[ $# -gt 0 ]]; then
+  echo "Unexpected extra args: $*" >&2
+  exit 1
+fi
+
+if [[ -z "${MULTI_DIR}" && -z "${INPUT_REPO}" ]]; then
+  echo "Provide either a repo input or --multi-dir." >&2
+  usage >&2
+  exit 1
+fi
+
+if [[ -n "${MULTI_DIR}" && -n "${INPUT_REPO}" ]]; then
+  echo "Use either <repo> OR --multi-dir, not both." >&2
+  exit 1
+fi
+
+case "${VIDEO_RESOLUTION}" in
+  2160p) WIDTH=3840; HEIGHT=2160 ;;
+  1440p) WIDTH=2560; HEIGHT=1440 ;;
+  1080p) WIDTH=1920; HEIGHT=1080 ;;
+  720p)  WIDTH=1280; HEIGHT=720 ;;
+  *)
+    echo "Unsupported resolution: ${VIDEO_RESOLUTION}" >&2
+    exit 1
+    ;;
+esac
+
+case "${GOURCE_FPS}" in
+  25|30|60) ;;
+  *)
+    echo "Unsupported fps: ${GOURCE_FPS} (supported: 25,30,60)" >&2
+    exit 1
+    ;;
+esac
+
+case "${TEMPLATE}" in
+  none|border|neon|sunset|matrix|blueprint|noir) ;;
+  *)
+    echo "Unsupported template: ${TEMPLATE} (supported: none,border,neon,sunset,matrix,blueprint,noir)" >&2
+    exit 1
+    ;;
+esac
+
+workdir="$(mktemp -d)"
+cleanup() { rm -rf "${workdir}"; }
+trap cleanup EXIT
+
+log_dir="${workdir}/logs"
+mkdir -p "${log_dir}"
+
+clone_or_use_repo() {
+  local src="$1"
+  local out_var="$2"
+  local repo_dir="$src"
+
+  if [[ "${src}" =~ ^https?:// || "${src}" =~ ^git@ ]]; then
+    repo_dir="${workdir}/repo"
+    echo "Cloning ${src} ..."
+    git clone --quiet "${src}" "${repo_dir}"
+  fi
+
+  if [[ ! -d "${repo_dir}/.git" ]]; then
+    echo "Not a git repository: ${repo_dir}" >&2
+    exit 1
+  fi
+
+  printf -v "$out_var" '%s' "$repo_dir"
+}
+
+build_single_log() {
+  local repo_dir="$1"
+  local out_log="$2"
+  gource --output-custom-log "$out_log" "$repo_dir" >/dev/null
+}
+
+build_multi_log() {
+  local base_dir="$1"
+  local out_log="$2"
+  local tmp_list=()
+
+  shopt -s nullglob
+  for d in "$base_dir"/*; do
+    if [[ -d "$d/.git" ]]; then
+      local name
+      name="$(basename "$d")"
+      local lg="${log_dir}/${name}.log"
+      echo "Collecting: $name"
+      gource --output-custom-log "$lg" "$d" >/dev/null
+      sed -i -E "s#^([0-9]+\|[^|]+\|)#\1/${name}#" "$lg"
+      tmp_list+=("$lg")
+    fi
+  done
+  shopt -u nullglob
+
+  if [[ ${#tmp_list[@]} -eq 0 ]]; then
+    echo "No git repos found in: $base_dir" >&2
+    exit 1
+  fi
+
+  cat "${tmp_list[@]}" | sort -n > "$out_log"
+}
+
+DEVLOG="${workdir}/development.log"
+if [[ -n "${MULTI_DIR}" ]]; then
+  build_multi_log "${MULTI_DIR}" "$DEVLOG"
+else
+  REPO_DIR=""
+  clone_or_use_repo "${INPUT_REPO}" REPO_DIR
+  build_single_log "$REPO_DIR" "$DEVLOG"
+fi
+
+LOGO_FILE=""
+if [[ -n "${LOGO_INPUT}" ]]; then
+  if [[ "${LOGO_INPUT}" =~ ^https?:// ]]; then
+    LOGO_FILE="${workdir}/logo"
+    echo "Downloading logo: ${LOGO_INPUT}"
+    curl -fsSL "${LOGO_INPUT}" -o "$LOGO_FILE"
+  else
+    if [[ ! -f "${LOGO_INPUT}" ]]; then
+      echo "Logo not found: ${LOGO_INPUT}" >&2
+      exit 1
+    fi
+    LOGO_FILE="$LOGO_INPUT"
+  fi
+fi
+
+if [[ "${TEMPLATE}" == "border" || "${TEMPLATE}" == "neon" || "${TEMPLATE}" == "blueprint" ]]; then
+  FRAME=26
+else
+  FRAME=0
+fi
+INNER_W=$((WIDTH - (FRAME * 2)))
+INNER_H=$((HEIGHT - (FRAME * 2)))
+
+PIPE="${workdir}/gource.pipe"
+mkfifo "$PIPE"
+
+echo "Rendering: ${OUTPUT}"
+echo "Resolution: ${WIDTH}x${HEIGHT} (${VIDEO_RESOLUTION}), fps=${GOURCE_FPS}, template=${TEMPLATE}"
+
+SDL_VIDEODRIVER=x11 \
+xvfb-run -a -s "-screen 0 ${WIDTH}x${HEIGHT}x24" \
+  gource \
+    --seconds-per-day "${GOURCE_SECONDS_PER_DAY}" \
+    --user-scale "${GOURCE_USER_SCALE}" \
+    --time-scale "${GOURCE_TIME_SCALE}" \
+    --auto-skip-seconds "${GOURCE_AUTO_SKIP}" \
+    --title "${GOURCE_TITLE}" \
+    --background-colour 000000 \
+    --font-colour FFFFFF \
+    --camera-mode overview \
+    --hide usernames,mouse,date,filenames \
+    --font-size 42 \
+    --dir-name-depth 3 \
+    --filename-time 2 \
+    --max-user-speed 500 \
+    --bloom-multiplier 1.2 \
+    --${INNER_W}x${INNER_H} \
+    --stop-at-end \
+    "$DEVLOG" \
+    -r "${GOURCE_FPS}" \
+    -o - > "$PIPE" &
+
+GOURCE_PID=$!
+
+FILTER=""
+case "${TEMPLATE}" in
+  none)
+    FILTER=""
+    ;;
+  border)
+    FILTER="pad=${WIDTH}:${HEIGHT}:${FRAME}:${FRAME}:#222226,drawbox=x=0:y=0:w=iw:h=ih:color=#4d4d54@0.85:t=5"
+    ;;
+  neon)
+    FILTER="pad=${WIDTH}:${HEIGHT}:${FRAME}:${FRAME}:#05030d,eq=saturation=1.45:contrast=1.20:brightness=-0.02,curves=all='0/0 0.35/0.22 0.7/0.88 1/1',drawgrid=w=80:h=80:t=1:c=#00ffd0@0.12,drawbox=x=0:y=0:w=iw:h=ih:color=#00ffd0@0.55:t=6"
+    ;;
+  sunset)
+    FILTER="colorbalance=rs=.12:gs=-.02:bs=-.10,eq=saturation=1.30:contrast=1.08:brightness=0.01,vignette=PI/7"
+    ;;
+  matrix)
+    FILTER="hue=s=0,curves=all='0/0 1/0.95',colorchannelmixer=rr=0:rg=0:rb=0:gr=0.15:gg=1.0:gb=0.05:br=0:bg=0:bb=0,noise=alls=8:allf=t,drawgrid=w=64:h=28:t=1:c=#00ff66@0.09"
+    ;;
+  blueprint)
+    FILTER="pad=${WIDTH}:${HEIGHT}:${FRAME}:${FRAME}:#0b1e3f,colorchannelmixer=rr=0.10:rg=0.12:rb=0.30:gr=0.12:gg=0.50:gb=0.75:br=0.35:bg=0.55:bb=1.00,eq=saturation=0.75:contrast=1.12,drawgrid=w=90:h=90:t=1:c=#9fd0ff@0.16,drawbox=x=0:y=0:w=iw:h=ih:color=#9fd0ff@0.45:t=5"
+    ;;
+  noir)
+    FILTER="hue=s=0,eq=contrast=1.25:brightness=-0.04,gblur=sigma=0.45,vignette=PI/5,drawbox=x=0:y=0:w=iw:h=ih:color=#ffffff@0.12:t=2"
+    ;;
+esac
+
+if [[ -n "${LOGO_FILE}" ]]; then
+  if [[ -n "${FILTER}" ]]; then
+    FILTER="${FILTER}[base];[1:v]scale=-1:${HEIGHT}/8[logo];[base][logo]overlay=W-w-40:H-h-40"
+  else
+    FILTER="[1:v]scale=-1:${HEIGHT}/8[logo];[0:v][logo]overlay=W-w-40:H-h-40"
+  fi
+fi
+
+if [[ -n "${LOGO_FILE}" ]]; then
+  ffmpeg -y \
+    -r "${GOURCE_FPS}" -f image2pipe -probesize 100M -i "$PIPE" \
+    -i "$LOGO_FILE" \
+    -filter_complex "$FILTER" \
+    -vcodec libx264 -pix_fmt yuv420p -crf "${H264_CRF}" -preset "${H264_PRESET}" -bf 0 \
+    "$OUTPUT"
+else
+  if [[ -n "${FILTER}" ]]; then
+    ffmpeg -y \
+      -r "${GOURCE_FPS}" -f image2pipe -probesize 100M -i "$PIPE" \
+      -vf "$FILTER" \
+      -vcodec libx264 -pix_fmt yuv420p -crf "${H264_CRF}" -preset "${H264_PRESET}" -bf 0 \
+      "$OUTPUT"
+  else
+    ffmpeg -y \
+      -r "${GOURCE_FPS}" -f image2pipe -probesize 100M -i "$PIPE" \
+      -vcodec libx264 -pix_fmt yuv420p -crf "${H264_CRF}" -preset "${H264_PRESET}" -bf 0 \
+      "$OUTPUT"
+  fi
+fi
+
+wait "$GOURCE_PID"
+
+echo "Done: ${OUTPUT}"
