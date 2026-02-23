@@ -23,6 +23,21 @@ No Docker required.
   - `compare-blueprint`
   - `compare-matrix`
   - `compare-noir`
+- Intricate split-screen templates:
+  - `split-quad`
+  - `split-vertical`
+  - `split-triple`
+  - `split-focus`
+  - `split-matrix`
+- Relationship templates (for similar project families):
+  - `relation-panel`
+  - `relation-neon`
+  - `relation-blueprint`
+  - `relation-noir`
+  - `relation-sunset`
+- Intelligent sync modes:
+  - `--sync-timing true` (normalized timeline)
+  - `--sync-timing smart` (normalized + blank-log pulse anchors)
 - Optional logo overlay (`--logo`)
 
 ## Quick start
@@ -43,9 +58,16 @@ nix run . -- --multi-dir ~/Projects -o org-history.mp4 -t "Org History"
 # Compare similar repos with unified timing + legend
 nix run . -- --multi-dir ~/Projects/utensils \
   --template compare-panel \
-  --sync-timing auto \
+  --sync-timing smart \
   -o compare.mp4 \
   -t "Repo Family Comparison"
+
+# Relationship view (infers similar project lines)
+nix run . -- --multi-dir ~/Projects/utensils \
+  --template relation-blueprint \
+  --sync-timing smart \
+  -o relations.mp4 \
+  -t "Project Relationship Graph"
 ```
 
 ## Template showcase examples

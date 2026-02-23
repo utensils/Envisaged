@@ -16,12 +16,13 @@ Options:
   -t, --title <text>            Video title
       --template <name>         none | border | neon | sunset | matrix | blueprint | noir |
                                  compare-panel | compare-neon | compare-blueprint | compare-matrix | compare-noir |
-                                 split-quad | split-vertical | split-triple | split-focus | split-matrix
+                                 split-quad | split-vertical | split-triple | split-focus | split-matrix |
+                                 relation-panel | relation-neon | relation-blueprint | relation-noir | relation-sunset
       --logo <path-or-url>      Optional logo image (local path or URL)
       --multi-dir <path>        Merge multiple repos from a directory
 
 Compare mode options:
-      --sync-timing <mode>      auto | true | false (default: auto)
+      --sync-timing <mode>      auto | true | false | smart (default: auto)
       --sync-span <seconds>     Normalized timeline span for compare mode (default: 31536000)
 
 Advanced:
@@ -126,12 +127,12 @@ case "${GOURCE_FPS}" in
 esac
 
 case "${TEMPLATE}" in
-  none|border|neon|sunset|matrix|blueprint|noir|compare-panel|compare-neon|compare-blueprint|compare-matrix|compare-noir|split-quad|split-vertical|split-triple|split-focus|split-matrix) ;;
+  none|border|neon|sunset|matrix|blueprint|noir|compare-panel|compare-neon|compare-blueprint|compare-matrix|compare-noir|split-quad|split-vertical|split-triple|split-focus|split-matrix|relation-panel|relation-neon|relation-blueprint|relation-noir|relation-sunset) ;;
   *) echo "Unsupported template: ${TEMPLATE}" >&2; exit 1 ;;
 esac
 
 case "${SYNC_TIMING}" in
-  auto|true|false) ;;
+  auto|true|false|smart) ;;
   *) echo "Unsupported --sync-timing value: ${SYNC_TIMING}" >&2; exit 1 ;;
 esac
 
@@ -142,16 +143,20 @@ fi
 
 is_compare_template=false
 is_split_template=false
+is_relation_template=false
 case "${TEMPLATE}" in
   compare-*) is_compare_template=true ;;
 esac
 case "${TEMPLATE}" in
   split-*) is_split_template=true ;;
 esac
+case "${TEMPLATE}" in
+  relation-*) is_relation_template=true ;;
+esac
 
 if [[ "${SYNC_TIMING}" == "auto" ]]; then
-  if [[ -n "${MULTI_DIR}" && ( "${is_compare_template}" == true || "${is_split_template}" == true ) ]]; then
-    SYNC_TIMING="true"
+  if [[ -n "${MULTI_DIR}" && ( "${is_compare_template}" == true || "${is_split_template}" == true || "${is_relation_template}" == true ) ]]; then
+    SYNC_TIMING="smart"
   else
     SYNC_TIMING="false"
   fi
@@ -205,6 +210,35 @@ normalize_log_timestamps() {
   ' "$in_log" > "$out_log"
 }
 
+inject_sync_blanks() {
+  local in_log="$1"
+  local out_log="$2"
+  local sync_span="$3"
+  local repo_name="$4"
+
+  local start_ts end_ts
+  start_ts=$(awk -F'|' 'NR==1{m=$1} $1<m{m=$1} END{print m+0}' "$in_log")
+  end_ts=$(awk -F'|' 'NR==1{m=$1} $1>m{m=$1} END{print m+0}' "$in_log")
+
+  local interval=$((sync_span / 8))
+  if [[ $interval -lt 1 ]]; then
+    interval=1
+  fi
+
+  cp "$in_log" "${out_log}.tmp"
+  echo "${start_ts}|_sync_|M|/${repo_name}/.sync/anchor" >> "${out_log}.tmp"
+  echo "${end_ts}|_sync_|M|/${repo_name}/.sync/anchor" >> "${out_log}.tmp"
+
+  local t=$((start_ts + interval))
+  while [[ $t -lt $end_ts ]]; do
+    echo "${t}|_sync_|M|/${repo_name}/.sync/pulse" >> "${out_log}.tmp"
+    t=$((t + interval))
+  done
+
+  sort -n "${out_log}.tmp" > "$out_log"
+  rm -f "${out_log}.tmp"
+}
+
 build_single_log() {
   local repo_dir="$1"
   local out_log="$2"
@@ -229,8 +263,12 @@ build_multi_log() {
       echo "Collecting: $name"
       gource --output-custom-log "$raw_log" "$d" >/dev/null
 
-      if [[ "${SYNC_TIMING}" == "true" ]]; then
+      if [[ "${SYNC_TIMING}" == "true" || "${SYNC_TIMING}" == "smart" ]]; then
         normalize_log_timestamps "$raw_log" "$prepared_log" "$SYNC_SPAN"
+        if [[ "${SYNC_TIMING}" == "smart" ]]; then
+          inject_sync_blanks "$prepared_log" "${prepared_log}.smart" "$SYNC_SPAN" "$name"
+          mv "${prepared_log}.smart" "$prepared_log"
+        fi
       else
         cp "$raw_log" "$prepared_log"
       fi
@@ -257,9 +295,58 @@ build_legend_file() {
     for repo in "${REPO_NAMES[@]}"; do
       echo "• $repo"
     done
-    if [[ "${SYNC_TIMING}" == "true" ]]; then
+    if [[ "${SYNC_TIMING}" == "true" || "${SYNC_TIMING}" == "smart" ]]; then
       echo
       echo "timing: unified"
+      if [[ "${SYNC_TIMING}" == "smart" ]]; then
+        echo "sync: smart blank-log pulses"
+      fi
+    fi
+  } > "$f"
+}
+
+build_relationship_file() {
+  local f="$1"
+  local max_rel=8
+  local count=0
+
+  {
+    echo "RELATIONSHIPS"
+    echo
+
+    for ((i=0; i<${#REPO_NAMES[@]}; i++)); do
+      for ((j=i+1; j<${#REPO_NAMES[@]}; j++)); do
+        local a="${REPO_NAMES[$i]}"
+        local b="${REPO_NAMES[$j]}"
+        local abase="${a%-nix}"
+        local bbase="${b%-nix}"
+
+        if [[ "$abase" == *"$bbase"* || "$bbase" == *"$abase"* ]]; then
+          echo "• $a ↔ $b (variant line)"
+          count=$((count + 1))
+        else
+          local shared=""
+          IFS='-' read -r -a toks <<< "$abase"
+          for tok in "${toks[@]}"; do
+            if [[ ${#tok} -ge 4 && "$bbase" == *"$tok"* ]]; then
+              shared="$tok"
+              break
+            fi
+          done
+          if [[ -n "$shared" ]]; then
+            echo "• $a ↔ $b (shared: $shared)"
+            count=$((count + 1))
+          fi
+        fi
+
+        if [[ $count -ge $max_rel ]]; then
+          break 2
+        fi
+      done
+    done
+
+    if [[ $count -eq 0 ]]; then
+      echo "• Similar stack family inferred from naming and cadence"
     fi
   } > "$f"
 }
@@ -288,7 +375,7 @@ if [[ -n "${LOGO_INPUT}" ]]; then
   fi
 fi
 
-if [[ "${TEMPLATE}" == "border" || "${TEMPLATE}" == "neon" || "${TEMPLATE}" == "blueprint" || "${TEMPLATE}" == compare-* || "${TEMPLATE}" == split-* ]]; then
+if [[ "${TEMPLATE}" == "border" || "${TEMPLATE}" == "neon" || "${TEMPLATE}" == "blueprint" || "${TEMPLATE}" == compare-* || "${TEMPLATE}" == split-* || "${TEMPLATE}" == relation-* ]]; then
   FRAME=26
 else
   FRAME=0
@@ -369,6 +456,21 @@ case "${TEMPLATE}" in
   compare-noir)
     FILTER="hue=s=0,eq=contrast=1.25:brightness=-0.04,gblur=sigma=0.45,vignette=PI/5,drawbox=x=0:y=0:w=iw:h=ih:color=#ffffff@0.22:t=3"
     ;;
+  relation-panel)
+    FILTER="pad=${WIDTH}:${HEIGHT}:${FRAME}:${FRAME}:#1a1a21,eq=saturation=1.08:contrast=1.08,drawbox=x=0:y=0:w=iw:h=ih:color=#90b4ff@0.35:t=4"
+    ;;
+  relation-neon)
+    FILTER="pad=${WIDTH}:${HEIGHT}:${FRAME}:${FRAME}:#03060c,eq=saturation=1.4:contrast=1.2,drawgrid=w=70:h=70:t=1:c=#00ffd0@0.1,drawbox=x=0:y=0:w=iw:h=ih:color=#00ffd0@0.45:t=5"
+    ;;
+  relation-blueprint)
+    FILTER="pad=${WIDTH}:${HEIGHT}:${FRAME}:${FRAME}:#0b1e3f,colorchannelmixer=rr=0.10:rg=0.12:rb=0.30:gr=0.12:gg=0.50:gb=0.75:br=0.35:bg=0.55:bb=1.00,eq=saturation=0.8:contrast=1.12,drawgrid=w=84:h=84:t=1:c=#9fd0ff@0.16,drawbox=x=0:y=0:w=iw:h=ih:color=#9fd0ff@0.45:t=5"
+    ;;
+  relation-noir)
+    FILTER="pad=${WIDTH}:${HEIGHT}:${FRAME}:${FRAME}:#151515,hue=s=0,eq=contrast=1.22:brightness=-0.03,vignette=PI/6,drawbox=x=0:y=0:w=iw:h=ih:color=#e6e6e6@0.28:t=4"
+    ;;
+  relation-sunset)
+    FILTER="pad=${WIDTH}:${HEIGHT}:${FRAME}:${FRAME}:#24121a,colorbalance=rs=.15:gs=-.03:bs=-.10,eq=saturation=1.26:contrast=1.08,vignette=PI/7,drawbox=x=0:y=0:w=iw:h=ih:color=#ffb06a@0.35:t=4"
+    ;;
   split-quad)
     USE_COMPLEX=true
     COMPLEX_FILTER="[0:v]split=4[a][b][c][d];[a]scale=iw/2:ih/2,eq=saturation=1.25:contrast=1.1[a1];[b]scale=iw/2:ih/2,hue=s=0,eq=contrast=1.2[b1];[c]scale=iw/2:ih/2,colorbalance=rs=.12:gs=-.02:bs=-.08[c1];[d]scale=iw/2:ih/2,colorchannelmixer=rr=0:rg=0:rb=0:gr=0.2:gg=1.0:gb=0.05:br=0:bg=0:bb=0[d1];[a1][b1][c1][d1]xstack=inputs=4:layout=0_0|w0_0|0_h0|w0_h0[outv]"
@@ -397,7 +499,7 @@ case "${TEMPLATE}" in
 esac
 
 legend_needed=false
-if [[ ${#REPO_NAMES[@]} -gt 0 && ( "${is_compare_template}" == true || "${is_split_template}" == true ) ]]; then
+if [[ ${#REPO_NAMES[@]} -gt 0 && ( "${is_compare_template}" == true || "${is_split_template}" == true || "${is_relation_template}" == true ) ]]; then
   legend_needed=true
 fi
 
@@ -415,6 +517,24 @@ if [[ "${legend_needed}" == true ]]; then
       FILTER="${FILTER},${legend_filter}"
     else
       FILTER="${legend_filter}"
+    fi
+  fi
+fi
+
+if [[ "${is_relation_template}" == true && ${#REPO_NAMES[@]} -gt 1 ]]; then
+  REL_FILE="${workdir}/relationships.txt"
+  build_relationship_file "$REL_FILE"
+  rel_h=$((170 + (${#REPO_NAMES[@]} * 24)))
+  rel_filter="drawbox=x=iw-560:y=18:w=542:h=${rel_h}:color=#000000@0.38:t=fill,drawbox=x=iw-560:y=18:w=542:h=${rel_h}:color=#ffd28a@0.24:t=2,drawtext=textfile=${REL_FILE}:x=w-540:y=36:fontsize=20:fontcolor=white:line_spacing=8"
+
+  if [[ "${USE_COMPLEX}" == true ]]; then
+    COMPLEX_FILTER="${COMPLEX_FILTER};[${FINAL_LABEL}]${rel_filter}[outrel]"
+    FINAL_LABEL="outrel"
+  else
+    if [[ -n "${FILTER}" ]]; then
+      FILTER="${FILTER},${rel_filter}"
+    else
+      FILTER="${rel_filter}"
     fi
   fi
 fi
