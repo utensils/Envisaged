@@ -96,9 +96,15 @@
           "${builtins.substring 0 4 lastModified}-${builtins.substring 4 2 lastModified}-${builtins.substring 6 2 lastModified}"
           + "T${builtins.substring 8 2 lastModified}:${builtins.substring 10 2 lastModified}:${builtins.substring 12 2 lastModified}Z";
 
-        dockerRoot = pkgs.buildEnv {
-          name = "envisaged-docker-root";
-          paths = runtimeDeps ++ [ envisaged-cli envisaged-web ];
+        dockerRootCli = pkgs.buildEnv {
+          name = "envisaged-docker-root-cli";
+          paths = [ envisaged-cli ];
+          pathsToLink = [ "/bin" ];
+        };
+
+        dockerRootWeb = pkgs.buildEnv {
+          name = "envisaged-docker-root-web";
+          paths = [ envisaged-web ];
           pathsToLink = [ "/bin" ];
         };
 
@@ -106,7 +112,7 @@
           name = "envisaged-cli";
           tag = "latest";
           created = dockerCreated;
-          copyToRoot = dockerRoot;
+          copyToRoot = dockerRootCli;
           config = {
             Cmd = [ "/bin/envisaged" ];
             WorkingDir = "/work";
@@ -118,7 +124,7 @@
           name = "envisaged-web";
           tag = "latest";
           created = dockerCreated;
-          copyToRoot = dockerRoot;
+          copyToRoot = dockerRootWeb;
           config = {
             Cmd = [ "/bin/envisaged-web" ];
             ExposedPorts = { "8787/tcp" = { }; };
