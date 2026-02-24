@@ -7,12 +7,17 @@ requires-python = ">=3.11"
 license = { text = "MIT" }
 authors = [{ name = "utensils" }]
 dependencies = [
+  "fastapi>=0.116.0",
+  "jinja2>=3.1.6",
+  "python-multipart>=0.0.20",
   "rich>=13.9.0",
   "typer>=0.16.0",
+  "uvicorn>=0.35.0",
 ]
 
 [project.scripts]
 envisaged = "envisaged.cli:main"
+envisaged-web = "envisaged.web:main"
 
 [dependency-groups]
 dev = [
@@ -23,6 +28,14 @@ dev = [
 [build-system]
 requires = ["hatchling>=1.27.0"]
 build-backend = "hatchling.build"
+
+[tool.hatch.build]
+include = [
+  "src/envisaged/web_templates/*.html",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/envisaged"]
 
 [tool.uv]
 default-groups = ["dev"]

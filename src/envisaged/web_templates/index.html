@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Envisaged Web</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700&display=swap" rel="stylesheet" />
+    <style>
+      body { font-family: 'JetBrains Mono', monospace; }
+      .noise {
+        position: fixed; inset: 0; pointer-events: none; opacity: 0.03; z-index: 1;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+      }
+      .gradient-text {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+    </style>
+  </head>
+  <body class="bg-zinc-950 text-zinc-300 min-h-screen">
+    <div class="noise"></div>
+    <main class="relative z-10 mx-auto max-w-5xl p-4 sm:p-6 lg:p-8">
+      <header class="mb-6 rounded-2xl border border-zinc-800/90 bg-zinc-900/50 p-5 sm:p-6">
+        <p class="text-xs uppercase tracking-[0.2em] text-zinc-500">urandom-style render control</p>
+        <h1 class="mt-2 text-2xl sm:text-3xl font-bold tracking-tight"><span class="gradient-text">Envisaged</span> Web</h1>
+        <p class="mt-2 text-sm text-zinc-400">Generate repo timeline videos from your phone or desktop.</p>
+      </header>
+
+      {% if message %}
+      <div class="mb-6 rounded-xl border border-emerald-700/60 bg-emerald-950/40 px-4 py-3 text-sm text-emerald-200">
+        {{ message }}
+      </div>
+      {% endif %}
+
+      <section class="mb-6 rounded-2xl border border-zinc-800/90 bg-zinc-900/40 p-4 sm:p-6">
+        <h2 class="mb-4 text-lg font-semibold">New Render</h2>
+        <form action="/render" method="post" class="space-y-4">
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <label class="block">
+              <span class="mb-1 block text-xs uppercase tracking-wide text-zinc-500">Mode</span>
+              <select name="mode" class="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm">
+                <option value="multi" selected>Multi Repo</option>
+                <option value="single">Single Repo</option>
+              </select>
+            </label>
+            <label class="block">
+              <span class="mb-1 block text-xs uppercase tracking-wide text-zinc-500">Template</span>
+              <select name="template" class="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm">
+                {% for t in templates %}
+                <option value="{{ t }}" {% if t == 'split-quad' %}selected{% endif %}>{{ t }}</option>
+                {% endfor %}
+              </select>
+            </label>
+          </div>
+
+          <label class="block">
+            <span class="mb-1 block text-xs uppercase tracking-wide text-zinc-500">Title</span>
+            <input name="title" value="Envisaged Render" class="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm" />
+          </label>
+
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <label class="block">
+              <span class="mb-1 block text-xs uppercase tracking-wide text-zinc-500">Repo (single mode)</span>
+              <input name="repo" value="." class="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm" />
+            </label>
+            <label class="block">
+              <span class="mb-1 block text-xs uppercase tracking-wide text-zinc-500">Multi dir</span>
+              <input name="multi_dir" value="{{ default_multi_dir }}" class="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm" />
+            </label>
+          </div>
+
+          <div class="grid grid-cols-3 gap-3">
+            <label class="block">
+              <span class="mb-1 block text-xs uppercase tracking-wide text-zinc-500">Resolution</span>
+              <select name="resolution" class="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm">
+                <option>720p</option>
+                <option>1080p</option>
+                <option>1440p</option>
+                <option>2160p</option>
+              </select>
+            </label>
+            <label class="block">
+              <span class="mb-1 block text-xs uppercase tracking-wide text-zinc-500">FPS</span>
+              <select name="fps" class="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm">
+                <option>30</option>
+                <option>25</option>
+                <option>60</option>
+              </select>
+            </label>
+            <label class="block">
+              <span class="mb-1 block text-xs uppercase tracking-wide text-zinc-500">Sync</span>
+              <select name="sync_timing" class="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm">
+                <option>auto</option>
+                <option>smart</option>
+                <option>true</option>
+                <option>false</option>
+              </select>
+            </label>
+          </div>
+
+          <button type="submit" class="w-full rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:from-indigo-500 hover:to-purple-500">
+            Start Render
+          </button>
+        </form>
+      </section>
+
+      <section class="rounded-2xl border border-zinc-800/90 bg-zinc-900/40 p-4 sm:p-6">
+        <h2 class="mb-4 text-lg font-semibold">Recent Renders</h2>
+        <div class="space-y-3">
+          {% for job in jobs %}
+          <article class="rounded-xl border border-zinc-800 bg-zinc-950/60 p-3 sm:p-4">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <p class="text-sm font-semibold text-zinc-200">{{ job.title }}</p>
+                <p class="mt-1 text-xs text-zinc-500">{{ job.template }} · {{ job.created_at }}</p>
+              </div>
+              <span class="rounded px-2 py-1 text-xs {% if job.status == 'done' %}bg-emerald-950 text-emerald-300 border border-emerald-800{% elif job.status == 'running' %}bg-indigo-950 text-indigo-300 border border-indigo-800{% else %}bg-rose-950 text-rose-300 border border-rose-800{% endif %}">
+                {{ job.status }}
+              </span>
+            </div>
+            {% if job.status == 'done' %}
+              <a class="mt-3 inline-block text-sm text-indigo-300 hover:text-indigo-200" href="/videos/{{ job.output_name }}" target="_blank">Open video ↗</a>
+            {% elif job.error %}
+              <p class="mt-2 text-xs text-rose-300">{{ job.error }}</p>
+            {% endif %}
+          </article>
+          {% else %}
+          <p class="text-sm text-zinc-500">No renders yet.</p>
+          {% endfor %}
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

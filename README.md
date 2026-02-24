@@ -34,6 +34,15 @@ uv sync
 uv run envisaged --help
 ```
 
+### Web UI (Tailwind 4.1)
+
+```bash
+uv run envisaged-web
+# open http://127.0.0.1:8787
+```
+
+The web interface uses the same urandom-style visual language (zinc dark base, JetBrains Mono, gradient accents, subtle noise overlay) and is mobile-first.
+
 ## CLI usage
 
 ```bash
