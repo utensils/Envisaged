@@ -57,6 +57,19 @@ envisaged [OPTIONS] [REPO]
 - `--sync-timing smart`: normalized timeline + blank-log pulse anchors
 - `--sync-timing auto`: smart mode for compare/split/relation templates in multi-repo mode
 
+## Project structure
+
+```text
+src/envisaged/
+  cli.py        # Rich/Typer CLI and render orchestration
+  templates.py  # template family definitions
+scripts/envisaged  # compatibility shim -> Python CLI
+pyproject.toml
+uv.lock
+flake.nix       # uv2nix packaging + dev shell
+treefmt.nix
+```
+
 ## Linting & formatting
 
 ```bash
