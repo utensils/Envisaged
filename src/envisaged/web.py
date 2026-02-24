@@ -20,7 +20,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from .cli import RenderConfig, render
-from .templates import TEMPLATES
+from .templates import DEFAULT_TEMPLATE, TEMPLATES
 
 OutputResolution = Literal["2160p", "1440p", "1080p", "720p"]
 SyncMode = Literal["auto", "true", "false", "smart"]
@@ -242,6 +242,7 @@ def index(
         "index.html",
         {
             "templates": sorted(TEMPLATES.keys()),
+            "default_template": DEFAULT_TEMPLATE,
             "jobs": _jobs_snapshot(),
             "default_multi_dir": "/tmp/envisaged-compare-src",
             "default_multi_repos": default_multi_repos,
@@ -266,7 +267,7 @@ def create_render(
     multi_dir: str = Form("/tmp/envisaged-compare-src"),
     multi_repos: str = Form(""),
     title: str = Form("Envisaged Render"),
-    template: str = Form("split-quad"),
+    template: str = Form(DEFAULT_TEMPLATE),
     resolution: OutputResolution = Form("720p"),
     fps: int = Form(30),
     sync_timing: SyncMode = Form("auto"),

@@ -10,7 +10,7 @@ from typing import Literal
 import typer
 from rich.console import Console
 
-from .templates import TEMPLATES, is_compare, is_relation, is_split
+from .templates import DEFAULT_TEMPLATE, TEMPLATES, is_compare, is_relation, is_split
 
 app = typer.Typer(add_completion=False, rich_markup_mode="rich")
 console = Console()
@@ -208,7 +208,7 @@ def clone_or_use_repo(src: str, workdir: Path) -> Path:
 
 def frame_for_template(template: str) -> int:
     if (
-        template in {"border", "neon", "blueprint"}
+        template in {"border", "neon", "blueprint", "urandom"}
         or is_compare(template)
         or is_split(template)
         or is_relation(template)
@@ -620,7 +620,7 @@ def cli(
     resolution: Resolution = typer.Option("1080p", "--resolution", "-r"),
     fps: int = typer.Option(60, "--fps", "-f"),
     title: str = typer.Option("Software Development", "--title", "-t"),
-    template: str = typer.Option("border", "--template"),
+    template: str = typer.Option(DEFAULT_TEMPLATE, "--template"),
     logo: str | None = typer.Option(None, "--logo"),
     multi_dir: Path | None = typer.Option(None, "--multi-dir"),
     sync_timing: SyncMode = typer.Option("auto", "--sync-timing"),

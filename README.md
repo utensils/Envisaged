@@ -93,7 +93,7 @@ envisaged [OPTIONS] [REPO]
 
 ### Template families
 
-- **Core:** `none`, `border`, `neon`, `sunset`, `matrix`, `blueprint`, `noir`
+- **Core:** `none`, `urandom` *(default)*, `border`, `neon`, `sunset`, `matrix`, `blueprint`, `noir`
 - **Compare:** `compare-panel`, `compare-neon`, `compare-blueprint`, `compare-matrix`, `compare-noir`
 - **Split:** `split-quad`, `split-vertical`, `split-triple`, `split-focus`, `split-matrix`
 - **Relationship:** `relation-panel`, `relation-neon`, `relation-blueprint`, `relation-noir`, `relation-sunset`

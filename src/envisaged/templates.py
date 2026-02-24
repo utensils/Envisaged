@@ -10,8 +10,20 @@ class TemplateDef:
     simple_filter: str | None = None
 
 
+DEFAULT_TEMPLATE = "urandom"
+
+
 TEMPLATES: dict[str, TemplateDef] = {
     "none": TemplateDef("none", "core", ""),
+    "urandom": TemplateDef(
+        "urandom",
+        "core",
+        "pad={w}:{h}:{frame}:{frame}:#05070b,eq=saturation=1.18:contrast=1.12:brightness=-0.01,"
+        "curves=all='0/0 0.28/0.18 0.72/0.9 1/1',"
+        "drawgrid=w=72:h=72:t=1:c=#00ffd0@0.08,"
+        "drawbox=x=0:y=0:w=iw:h=ih:color=#00ffd0@0.36:t=4,"
+        "drawbox=x=10:y=10:w=iw-20:h=ih-20:color=#7c3aed@0.22:t=2",
+    ),
     "border": TemplateDef(
         "border",
         "core",

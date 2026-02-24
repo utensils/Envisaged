@@ -64,7 +64,7 @@
               <span class="mb-1 block text-xs uppercase tracking-wide text-zinc-500">Template</span>
               <select name="template" class="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm">
                 {% for t in templates %}
-                <option value="{{ t }}" {% if t == 'split-quad' %}selected{% endif %}>{{ t }}</option>
+                <option value="{{ t }}" {% if t == default_template %}selected{% endif %}>{{ t }}</option>
                 {% endfor %}
               </select>
             </label>
