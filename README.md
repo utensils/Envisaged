@@ -43,6 +43,11 @@ uv run envisaged-web
 
 The web interface uses the same urandom-style visual language (zinc dark base, JetBrains Mono, gradient accents, subtle noise overlay) and is mobile-first.
 
+Web UI extras:
+- GitHub-like repo search (`owner/repo` picker)
+- selected GitHub repos are cloned/updated locally under `/tmp/envisaged-web-repos`
+- POST/redirect/GET flow avoids browser “submit form again” prompts
+
 ## CLI usage
 
 ```bash
