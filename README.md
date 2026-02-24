@@ -61,14 +61,19 @@ uv run envisaged --help
 ### Web UI (Tailwind 4.1)
 
 ```bash
-uv run envisaged-web
+# stable runtime
+./scripts/web-prod
 # open http://127.0.0.1:8787
+
+# hot reload runtime
+./scripts/web-dev
 ```
 
-Nix shell launch:
+Direct commands (if preferred):
 
 ```bash
-nix develop -c uv run envisaged-web
+nix run .#web
+nix develop -c bash -lc 'unset UV_NO_SYNC; uv run uvicorn envisaged.web:app --host 0.0.0.0 --port 8787 --reload'
 ```
 
 Network access:
@@ -82,6 +87,31 @@ Web UI extras:
 - GitHub-like repo search (`owner/repo` picker)
 - selected GitHub repos are cloned/updated locally under `/tmp/envisaged-web-repos`
 - POST/redirect/GET flow avoids browser “submit form again” prompts
+
+### Systemd user services (recommended)
+
+Service units are provided in `systemd/user/`:
+- `envisaged-web.service` (stable)
+- `envisaged-web-dev.service` (hot reload)
+
+Install and manage:
+
+```bash
+mkdir -p ~/.config/systemd/user
+cp systemd/user/envisaged-web*.service ~/.config/systemd/user/
+systemctl --user daemon-reload
+
+# stable mode
+systemctl --user enable --now envisaged-web.service
+
+# OR dev/hot-reload mode
+systemctl --user disable --now envisaged-web.service || true
+systemctl --user enable --now envisaged-web-dev.service
+
+# logs/status
+systemctl --user status envisaged-web.service
+journalctl --user -u envisaged-web.service -f
+```
 
 ## CLI usage
 

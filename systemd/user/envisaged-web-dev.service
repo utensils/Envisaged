@@ -1,0 +1,14 @@
+[Unit]
+Description=Envisaged Web UI (development, hot reload)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/Projects/utensils/Envisaged
+ExecStart=%h/Projects/utensils/Envisaged/scripts/web-dev
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=default.target

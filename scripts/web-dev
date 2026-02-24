@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Dev runtime with hot reload. We intentionally unset UV_NO_SYNC because
+# devShell exports UV_NO_SYNC=1 for speed, which can cause environment mismatch warnings.
+exec nix develop -c bash -lc 'unset UV_NO_SYNC; uv run uvicorn envisaged.web:app --host 0.0.0.0 --port 8787 --reload'
