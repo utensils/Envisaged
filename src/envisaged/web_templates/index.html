@@ -85,7 +85,7 @@
             </label>
             <label class="block">
               <span class="mb-1 block text-[11px] uppercase label-meta text-zinc-500">Template</span>
-              <select name="template" class="form-select w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm">
+              <select id="template-select" name="template" class="form-select w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm">
                 {% for t in templates %}
                 <option value="{{ t }}" {% if t == default_template %}selected{% endif %}>{{ t }}</option>
                 {% endfor %}
@@ -95,7 +95,7 @@
 
           <label class="block">
             <span class="mb-1 block text-[11px] uppercase label-meta text-zinc-500">Title</span>
-            <input name="title" value="Envisaged Render" class="form-input w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm" />
+            <input id="title-input" name="title" value="Envisaged Render" class="form-input w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm" />
           </label>
 
           <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -119,7 +119,7 @@
           <div id="system-group" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <label class="block">
               <span class="mb-1 block text-[11px] uppercase label-meta text-zinc-500">System Source</span>
-              <select name="system_log" class="form-select w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm">
+              <select id="system-source-select" name="system_log" class="form-select w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm">
                 <option value="journal">journal</option>
                 <option value="kernel">kernel</option>
                 <option value="auth">auth</option>
@@ -164,7 +164,7 @@
             </label>
             <label class="block">
               <span class="mb-1 block text-[11px] uppercase label-meta text-zinc-500">Legend</span>
-              <select name="legend" class="form-select w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm">
+              <select id="legend-select" name="legend" class="form-select w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm">
                 <option>auto</option>
                 <option>none</option>
                 <option>repos</option>
@@ -175,7 +175,7 @@
             </label>
             <label class="block">
               <span class="mb-1 block text-[11px] uppercase label-meta text-zinc-500">Legend Limit</span>
-              <input name="legend_limit" type="number" min="1" max="20" value="8" class="form-input w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm" />
+              <input id="legend-limit-input" name="legend_limit" type="number" min="1" max="20" value="8" class="form-input w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm" />
             </label>
           </div>
 
@@ -223,6 +223,11 @@
       const multiReposEl = document.getElementById('multi-repos');
       const multiReposGroup = document.getElementById('multi-repos-group');
       const systemGroup = document.getElementById('system-group');
+      const templateSelect = document.getElementById('template-select');
+      const titleInput = document.getElementById('title-input');
+      const legendSelect = document.getElementById('legend-select');
+      const legendLimitInput = document.getElementById('legend-limit-input');
+      const systemSourceSelect = document.getElementById('system-source-select');
       const refreshBtn = document.getElementById('refresh-btn');
 
       function updateModeVisibility() {
@@ -241,6 +246,17 @@
 
         systemGroup.classList.toggle('opacity-50', !system);
         systemGroup.classList.toggle('hidden', !system);
+
+        if (system && modeEl.dataset.systemPresetApplied !== '1') {
+          if (titleInput.value.trim() === '' || titleInput.value === 'Envisaged Render') {
+            titleInput.value = 'System Services';
+          }
+          templateSelect.value = 'tokyo-night';
+          legendSelect.value = 'actions';
+          legendLimitInput.value = '8';
+          systemSourceSelect.value = 'journal';
+          modeEl.dataset.systemPresetApplied = '1';
+        }
       }
 
       modeEl.addEventListener('change', updateModeVisibility);

@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+OUT=${1:-system-services.mp4}
+
+exec nix run . -- \
+  --system-log journal \
+  --system-log-since "24 hours ago" \
+  --system-log-limit 5000 \
+  --template tokyo-night \
+  --legend actions \
+  --title "System Services" \
+  -o "$OUT"

@@ -32,6 +32,12 @@ nix run . -- --multi-dir ~/Projects/utensils --template compare-panel --sync-tim
 
 # Render system logs (journalctl -> timeline)
 nix run . -- --system-log journal --system-log-since "24 hours ago" --template tokyo-night --legend all -o system-journal.mp4
+
+# Service-focused system timeline (recommended preset)
+nix run . -- --system-log journal --system-log-since "24 hours ago" --system-log-limit 5000 --template tokyo-night --legend actions --title "System Services" -o system-services.mp4
+
+# Same preset via helper script
+./scripts/example-system-services ./out/examples/system-services-example.mp4
 ```
 
 ### Nix build targets
@@ -88,6 +94,7 @@ The web interface uses the same urandom-style visual language (zinc dark base, J
 Web UI extras:
 - defaults to **single-repo** mode for fast one-off renders
 - includes **System Log** mode (`journal`, `kernel`, `auth`) for machine activity timelines
+- System Log mode auto-applies a useful preset (`tokyo-night` + `legend=actions` + title `System Services`)
 - GitHub-like repo search (`owner/repo` picker)
 - selected GitHub repos are cloned/updated locally under `/tmp/envisaged-web-repos`
 - POST/redirect/GET flow avoids browser “submit form again” prompts
