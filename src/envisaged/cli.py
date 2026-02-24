@@ -17,6 +17,7 @@ console = Console()
 
 Resolution = Literal["2160p", "1440p", "1080p", "720p"]
 SyncMode = Literal["auto", "true", "false", "smart"]
+LegendMode = Literal["auto", "none", "repos", "files", "actions", "all"]
 
 RESOLUTION_MAP: dict[str, tuple[int, int]] = {
     "2160p": (3840, 2160),
@@ -40,6 +41,8 @@ class RenderConfig:
     input_repo: str | None
     sync_timing: SyncMode
     sync_span: int
+    legend: LegendMode
+    legend_limit: int
     seconds_per_day: float
     time_scale: float
     user_scale: float
@@ -141,6 +144,43 @@ def build_relationship_lines(repo_names: list[str], max_rel: int = 8) -> list[st
 
 def gource_log(repo_dir: Path, out_log: Path) -> None:
     run(["gource", "--output-custom-log", str(out_log), str(repo_dir)], stdout=subprocess.DEVNULL)
+
+
+def _extension_label(path_text: str) -> str:
+    name = Path(path_text).name
+    if name.startswith(".") and name.count(".") == 1:
+        return name.lower()
+    suffix = Path(name).suffix.lower()
+    return suffix if suffix else "[no-ext]"
+
+
+def summarize_log_for_legend(log_path: Path, *, limit: int) -> tuple[list[str], list[str]]:
+    ext_counts: dict[str, int] = {}
+    action_counts: dict[str, int] = {"A": 0, "M": 0, "D": 0}
+
+    with log_path.open("r", encoding="utf-8", errors="ignore") as fh:
+        for raw in fh:
+            parts = raw.rstrip("\n").split("|", 3)
+            if len(parts) != 4:
+                continue
+            action = parts[2].strip().upper() or "?"
+            path_text = parts[3].strip()
+
+            action_counts[action] = action_counts.get(action, 0) + 1
+            ext = _extension_label(path_text)
+            ext_counts[ext] = ext_counts.get(ext, 0) + 1
+
+    top_ext = sorted(ext_counts.items(), key=lambda kv: (-kv[1], kv[0]))[: max(1, limit)]
+    ext_lines = [f"- {ext}: {count}" for ext, count in top_ext]
+
+    action_map = {"A": "added", "M": "modified", "D": "deleted"}
+    action_lines = [
+        f"- {action_map.get(key, key)}: {count}"
+        for key, count in sorted(action_counts.items(), key=lambda kv: (-kv[1], kv[0]))
+        if count > 0
+    ]
+
+    return ext_lines, action_lines
 
 
 def build_multi_logs(
@@ -366,28 +406,47 @@ def render(config: RenderConfig) -> None:
             simple = TEMPLATES[config.template].simple_filter or ""
             base_filter = simple.format(w=width, h=height, frame=frame)
 
-        legend_needed = bool(repo_names) and (
-            is_compare_template or is_split_template or is_relation_template
-        )
-        if legend_needed:
-            lines = ["COMPARE LEGEND", "", *[f"- {r}" for r in repo_names]]
-            if sync_timing in {"true", "smart"}:
-                lines += ["", "timing: unified"]
-                if sync_timing == "smart":
-                    lines += ["sync: smart blank-log pulses"]
+        resolved_legend = config.legend
+        if resolved_legend == "auto":
+            if is_compare_template or is_split_template or is_relation_template:
+                resolved_legend = "repos"
+            else:
+                resolved_legend = "none"
 
+        legend_lines: list[str] = []
+        if resolved_legend in {"repos", "all"} and repo_names:
+            legend_lines += ["REPOS", "", *[f"- {r}" for r in repo_names]]
+            if sync_timing in {"true", "smart"}:
+                legend_lines += ["", "timing: unified"]
+                if sync_timing == "smart":
+                    legend_lines += ["sync: smart blank-log pulses"]
+
+        include_file_legend = resolved_legend in {"files", "all"}
+        include_action_legend = resolved_legend in {"actions", "all"}
+        if include_file_legend or include_action_legend:
+            ext_lines, action_lines = summarize_log_for_legend(devlog, limit=config.legend_limit)
+            if include_file_legend:
+                if legend_lines:
+                    legend_lines += [""]
+                legend_lines += ["FILE TYPES", "", *ext_lines]
+            if include_action_legend:
+                if legend_lines:
+                    legend_lines += [""]
+                legend_lines += ["ACTIONS", "", *action_lines]
+
+        if legend_lines:
             font = 24 if height >= 1080 else 18
             spacing = 10 if height >= 1080 else 8
-            max_chars = max(len(x) for x in lines) if lines else 0
+            max_chars = max(len(x) for x in legend_lines) if legend_lines else 0
             box_w = max(360, min(width - 36, 90 + (max_chars * (font // 2 + 4))))
-            box_h = min(height - 36, 24 + (len(lines) * (font + spacing)) + 24)
+            box_h = min(height - 36, 24 + (len(legend_lines) * (font + spacing)) + 24)
             legend_filter = overlay_lines_filter(
                 box_x=18,
                 box_y=18,
                 box_w=box_w,
                 box_h=box_h,
                 border_color="#d8e7ff@0.24",
-                lines=lines,
+                lines=legend_lines,
                 font_size=font,
                 line_spacing=spacing,
                 text_x=34,
@@ -625,6 +684,8 @@ def cli(
     multi_dir: Path | None = typer.Option(None, "--multi-dir"),
     sync_timing: SyncMode = typer.Option("auto", "--sync-timing"),
     sync_span: int = typer.Option(31536000, "--sync-span"),
+    legend: LegendMode = typer.Option("auto", "--legend"),
+    legend_limit: int = typer.Option(8, "--legend-limit"),
     seconds_per_day: float = typer.Option(0.12, "--seconds-per-day"),
     time_scale: float = typer.Option(1.6, "--time-scale"),
     user_scale: float = typer.Option(1.35, "--user-scale"),
@@ -639,6 +700,8 @@ def cli(
         raise typer.BadParameter("Provide either a repo input or --multi-dir")
     if template not in TEMPLATES:
         raise typer.BadParameter(f"Unsupported template: {template}")
+    if legend_limit < 1:
+        raise typer.BadParameter("--legend-limit must be >= 1")
 
     cfg = RenderConfig(
         output=output,
@@ -651,6 +714,8 @@ def cli(
         input_repo=repo,
         sync_timing=sync_timing,
         sync_span=sync_span,
+        legend=legend,
+        legend_limit=legend_limit,
         seconds_per_day=seconds_per_day,
         time_scale=time_scale,
         user_scale=user_scale,

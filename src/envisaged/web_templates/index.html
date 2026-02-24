@@ -78,8 +78,8 @@
             <label class="block">
               <span class="mb-1 block text-[11px] uppercase label-meta text-zinc-500">Mode</span>
               <select id="mode" name="mode" class="form-select w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm">
-                <option value="multi" selected>Multi Repo</option>
-                <option value="single">Single Repo</option>
+                <option value="single" selected>Single Repo</option>
+                <option value="multi">Multi Repo</option>
               </select>
             </label>
             <label class="block">
@@ -115,7 +115,7 @@
             <span class="mt-1 block text-xs text-zinc-500">If provided, these repos are used (cloned/updated locally in /tmp) and rendered together.</span>
           </label>
 
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
             <label class="block">
               <span class="mb-1 block text-[11px] uppercase label-meta text-zinc-500">Resolution</span>
               <select name="resolution" class="form-select w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm">
@@ -141,6 +141,21 @@
                 <option>true</option>
                 <option>false</option>
               </select>
+            </label>
+            <label class="block">
+              <span class="mb-1 block text-[11px] uppercase label-meta text-zinc-500">Legend</span>
+              <select name="legend" class="form-select w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm">
+                <option>auto</option>
+                <option>none</option>
+                <option>repos</option>
+                <option>files</option>
+                <option>actions</option>
+                <option>all</option>
+              </select>
+            </label>
+            <label class="block">
+              <span class="mb-1 block text-[11px] uppercase label-meta text-zinc-500">Legend Limit</span>
+              <input name="legend_limit" type="number" min="1" max="20" value="8" class="form-input w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm" />
             </label>
           </div>
 

@@ -12,6 +12,35 @@ class TemplateDef:
 
 DEFAULT_TEMPLATE = "urandom"
 
+OMARCHY_PALETTES: dict[str, dict[str, str]] = {
+    "catppuccin": {"background": "#1e1e2e", "accent": "#89b4fa", "alt": "#f5c2e7"},
+    "catppuccin-latte": {"background": "#eff1f5", "accent": "#1e66f5", "alt": "#ea76cb"},
+    "ethereal": {"background": "#060b1e", "accent": "#7d82d9", "alt": "#c89dc1"},
+    "everforest": {"background": "#2d353b", "accent": "#7fbbb3", "alt": "#d699b6"},
+    "flexoki-light": {"background": "#fffcf0", "accent": "#205ea6", "alt": "#ce5d97"},
+    "gruvbox": {"background": "#282828", "accent": "#7daea3", "alt": "#d3869b"},
+    "hackerman": {"background": "#0b0c16", "accent": "#82fb9c", "alt": "#7cf8f7"},
+    "kanagawa": {"background": "#1f1f28", "accent": "#7e9cd8", "alt": "#957fb8"},
+    "matte-black": {"background": "#121212", "accent": "#e68e0d", "alt": "#d35f5f"},
+    "miasma": {"background": "#222222", "accent": "#78824b", "alt": "#bb7744"},
+    "nord": {"background": "#2e3440", "accent": "#81a1c1", "alt": "#b48ead"},
+    "osaka-jade": {"background": "#111c18", "accent": "#509475", "alt": "#d2689c"},
+    "ristretto": {"background": "#2c2525", "accent": "#f38d70", "alt": "#a8a9eb"},
+    "rose-pine": {"background": "#faf4ed", "accent": "#56949f", "alt": "#907aa9"},
+    "tokyo-night": {"background": "#1a1b26", "accent": "#7aa2f7", "alt": "#ad8ee6"},
+    "vantablack": {"background": "#0d0d0d", "accent": "#8d8d8d", "alt": "#b0b0b0"},
+    "white": {"background": "#ffffff", "accent": "#1a1a1a", "alt": "#3e3e3e"},
+}
+
+
+def build_omarchy_filter(*, background: str, accent: str, alt: str) -> str:
+    return (
+        "pad={{w}}:{{h}}:{{frame}}:{{frame}}:{background},eq=saturation=1.12:contrast=1.1:brightness=-0.01,"
+        "drawgrid=w=72:h=72:t=1:c={accent}@0.1,"
+        "drawbox=x=0:y=0:w=iw:h=ih:color={accent}@0.34:t=4,"
+        "drawbox=x=10:y=10:w=iw-20:h=ih-20:color={alt}@0.22:t=2"
+    ).format(background=background, accent=accent, alt=alt)
+
 
 TEMPLATES: dict[str, TemplateDef] = {
     "none": TemplateDef("none", "core", ""),
@@ -135,6 +164,17 @@ TEMPLATES: dict[str, TemplateDef] = {
     "split-focus": TemplateDef("split-focus", "split"),
     "split-matrix": TemplateDef("split-matrix", "split"),
 }
+
+for omarchy_name, palette in OMARCHY_PALETTES.items():
+    TEMPLATES[f"omarchy-{omarchy_name}"] = TemplateDef(
+        f"omarchy-{omarchy_name}",
+        "core",
+        build_omarchy_filter(
+            background=palette["background"],
+            accent=palette["accent"],
+            alt=palette["alt"],
+        ),
+    )
 
 
 def is_compare(name: str) -> bool:

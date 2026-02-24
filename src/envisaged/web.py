@@ -24,6 +24,7 @@ from .templates import DEFAULT_TEMPLATE, TEMPLATES
 
 OutputResolution = Literal["2160p", "1440p", "1080p", "720p"]
 SyncMode = Literal["auto", "true", "false", "smart"]
+LegendMode = Literal["auto", "none", "repos", "files", "actions", "all"]
 
 BASE_DIR = Path(__file__).resolve().parent
 TEMPLATES_DIR = BASE_DIR / "web_templates"
@@ -262,7 +263,7 @@ def github_search(q: str = Query(min_length=2, max_length=100)) -> JSONResponse:
 
 @app.post("/render")
 def create_render(
-    mode: str = Form("multi"),
+    mode: str = Form("single"),
     repo: str = Form("."),
     multi_dir: str = Form("/tmp/envisaged-compare-src"),
     multi_repos: str = Form(""),
@@ -271,6 +272,8 @@ def create_render(
     resolution: OutputResolution = Form("720p"),
     fps: int = Form(30),
     sync_timing: SyncMode = Form("auto"),
+    legend: LegendMode = Form("auto"),
+    legend_limit: int = Form(8),
 ) -> RedirectResponse:
     job_id = uuid4().hex[:8]
     output_name = f"{datetime.now().strftime('%Y%m%d-%H%M%S')}-{job_id}.mp4"
@@ -296,6 +299,8 @@ def create_render(
             input_repo=repo_source if mode == "single" else None,
             sync_timing=sync_timing,
             sync_span=31536000,
+            legend=legend,
+            legend_limit=legend_limit,
             seconds_per_day=0.12,
             time_scale=1.6,
             user_scale=1.35,

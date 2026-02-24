@@ -78,6 +78,7 @@ Network access:
 The web interface uses the same urandom-style visual language (zinc dark base, JetBrains Mono, gradient accents, subtle noise overlay) and is mobile-first.
 
 Web UI extras:
+- defaults to **single-repo** mode for fast one-off renders
 - GitHub-like repo search (`owner/repo` picker)
 - selected GitHub repos are cloned/updated locally under `/tmp/envisaged-web-repos`
 - POST/redirect/GET flow avoids browser “submit form again” prompts
@@ -94,6 +95,11 @@ envisaged [OPTIONS] [REPO]
 ### Template families
 
 - **Core:** `none`, `urandom` *(default)*, `border`, `neon`, `sunset`, `matrix`, `blueprint`, `noir`
+- **Omarchy core palettes:**
+  - `omarchy-catppuccin`, `omarchy-catppuccin-latte`, `omarchy-ethereal`, `omarchy-everforest`
+  - `omarchy-flexoki-light`, `omarchy-gruvbox`, `omarchy-hackerman`, `omarchy-kanagawa`
+  - `omarchy-matte-black`, `omarchy-miasma`, `omarchy-nord`, `omarchy-osaka-jade`
+  - `omarchy-ristretto`, `omarchy-rose-pine`, `omarchy-tokyo-night`, `omarchy-vantablack`, `omarchy-white`
 - **Compare:** `compare-panel`, `compare-neon`, `compare-blueprint`, `compare-matrix`, `compare-noir`
 - **Split:** `split-quad`, `split-vertical`, `split-triple`, `split-focus`, `split-matrix`
 - **Relationship:** `relation-panel`, `relation-neon`, `relation-blueprint`, `relation-noir`, `relation-sunset`
@@ -104,6 +110,15 @@ envisaged [OPTIONS] [REPO]
 - `--sync-timing true`: normalized unified timeline
 - `--sync-timing smart`: normalized timeline + blank-log pulse anchors
 - `--sync-timing auto`: smart mode for compare/split/relation templates in multi-repo mode
+
+### Legend modes
+
+- `--legend auto`: repo legend for compare/split/relation templates, none otherwise
+- `--legend none`: disable overlays
+- `--legend repos`: show repo legend (best for multi-repo renders)
+- `--legend files`: show top file types (`--legend-limit` controls count)
+- `--legend actions`: show add/modify/delete totals
+- `--legend all`: show repos + file types + actions
 
 ## Example videos
 
