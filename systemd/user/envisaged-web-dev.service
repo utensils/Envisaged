@@ -6,7 +6,7 @@ Wants=network-online.target
 [Service]
 Type=simple
 WorkingDirectory=%h/Projects/utensils/Envisaged
-ExecStart=%h/Projects/utensils/Envisaged/scripts/web-dev
+ExecStart=/run/current-system/sw/bin/bash -lc 'cd %h/Projects/utensils/Envisaged && ./scripts/web-dev'
 Restart=always
 RestartSec=2
 
