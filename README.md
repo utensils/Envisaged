@@ -97,6 +97,16 @@ envisaged [OPTIONS] [REPO]
 - `--sync-timing smart`: normalized timeline + blank-log pulse anchors
 - `--sync-timing auto`: smart mode for compare/split/relation templates in multi-repo mode
 
+## Example videos
+
+Legacy showcase renders from the original Envisaged project:
+
+| Repo | Video |
+|---|---|
+| Elixir School | [![Elixir School Visualization](http://img.youtube.com/vi/twpR-opLrZU/0.jpg)](http://www.youtube.com/watch?feature=player_embedded&v=twpR-opLrZU) |
+| Kubernetes | [![Kubernetes Visualization](http://img.youtube.com/vi/UTwxiwF7Zac/0.jpg)](http://www.youtube.com/watch?feature=player_embedded&v=UTwxiwF7Zac) |
+| Elixir Lang | [![Elixir Lang Visualization](http://img.youtube.com/vi/wl5uuvDK3ao/0.jpg)](http://www.youtube.com/watch?feature=player_embedded&v=wl5uuvDK3ao) |
+
 ## Project structure
 
 ```text
