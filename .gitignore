@@ -1,3 +1,6 @@
 .vscode
 *.mp4
 out/
+.venv/
+__pycache__/
+*.pyc
