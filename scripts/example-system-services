@@ -8,6 +8,6 @@ exec nix run . -- \
   --system-log-since "24 hours ago" \
   --system-log-limit 5000 \
   --template tokyo-night \
-  --legend actions \
+  --legend services \
   --title "System Services" \
   -o "$OUT"

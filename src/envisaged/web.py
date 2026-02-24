@@ -24,7 +24,7 @@ from .templates import DEFAULT_TEMPLATE, TEMPLATES
 
 OutputResolution = Literal["2160p", "1440p", "1080p", "720p"]
 SyncMode = Literal["auto", "true", "false", "smart"]
-LegendMode = Literal["auto", "none", "repos", "files", "actions", "all"]
+LegendMode = Literal["auto", "none", "repos", "files", "actions", "services", "all"]
 SystemLogSource = Literal["journal", "kernel", "auth"]
 
 BASE_DIR = Path(__file__).resolve().parent

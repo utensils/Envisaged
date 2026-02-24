@@ -19,7 +19,7 @@ console = Console()
 
 Resolution = Literal["2160p", "1440p", "1080p", "720p"]
 SyncMode = Literal["auto", "true", "false", "smart"]
-LegendMode = Literal["auto", "none", "repos", "files", "actions", "all"]
+LegendMode = Literal["auto", "none", "repos", "files", "actions", "services", "all"]
 SystemLogSource = Literal["journal", "kernel", "auth"]
 
 RESOLUTION_MAP: dict[str, tuple[int, int]] = {
@@ -145,11 +145,9 @@ def build_system_log(
         )
         actor_text = sanitize_log_token(str(actor))
 
+        # System timelines are event streams rather than file lifecycle changes.
+        # Keep action neutral to avoid confusing add/delete semantics in the visual.
         action = "M"
-        if any(k in msg_lower for k in ["started", "connected", "accepted", "opened", "mounted"]):
-            action = "A"
-        elif any(k in msg_lower for k in ["failed", "denied", "error", "stopped", "closed", "disconnected"]):
-            action = "D"
 
         message_head = sanitize_log_token(msg.split(":", 1)[0][:56])
         path = f"/system/{source}/{actor_text}/{message_head}"
@@ -236,21 +234,24 @@ def _extension_label(path_text: str) -> str:
     return suffix if suffix else "[no-ext]"
 
 
-def summarize_log_for_legend(log_path: Path, *, limit: int) -> tuple[list[str], list[str]]:
+def summarize_log_for_legend(log_path: Path, *, limit: int) -> tuple[list[str], list[str], list[str]]:
     ext_counts: dict[str, int] = {}
     action_counts: dict[str, int] = {"A": 0, "M": 0, "D": 0}
+    service_counts: dict[str, int] = {}
 
     with log_path.open("r", encoding="utf-8", errors="ignore") as fh:
         for raw in fh:
             parts = raw.rstrip("\n").split("|", 3)
             if len(parts) != 4:
                 continue
+            actor = parts[1].strip()
             action = parts[2].strip().upper() or "?"
             path_text = parts[3].strip()
 
             action_counts[action] = action_counts.get(action, 0) + 1
             ext = _extension_label(path_text)
             ext_counts[ext] = ext_counts.get(ext, 0) + 1
+            service_counts[actor] = service_counts.get(actor, 0) + 1
 
     top_ext = sorted(ext_counts.items(), key=lambda kv: (-kv[1], kv[0]))[: max(1, limit)]
     ext_lines = [f"- {ext}: {count}" for ext, count in top_ext]
@@ -262,7 +263,10 @@ def summarize_log_for_legend(log_path: Path, *, limit: int) -> tuple[list[str], 
         if count > 0
     ]
 
-    return ext_lines, action_lines
+    top_services = sorted(service_counts.items(), key=lambda kv: (-kv[1], kv[0]))[: max(1, limit)]
+    service_lines = [f"- {svc}: {count}" for svc, count in top_services]
+
+    return ext_lines, action_lines, service_lines
 
 
 def build_multi_logs(
@@ -500,7 +504,9 @@ def render(config: RenderConfig) -> None:
 
         resolved_legend = config.legend
         if resolved_legend == "auto":
-            if is_compare_template or is_split_template or is_relation_template:
+            if config.system_log:
+                resolved_legend = "services"
+            elif is_compare_template or is_split_template or is_relation_template:
                 resolved_legend = "repos"
             else:
                 resolved_legend = "none"
@@ -515,8 +521,11 @@ def render(config: RenderConfig) -> None:
 
         include_file_legend = resolved_legend in {"files", "all"}
         include_action_legend = resolved_legend in {"actions", "all"}
-        if include_file_legend or include_action_legend:
-            ext_lines, action_lines = summarize_log_for_legend(devlog, limit=config.legend_limit)
+        include_service_legend = resolved_legend in {"services", "all"}
+        if include_file_legend or include_action_legend or include_service_legend:
+            ext_lines, action_lines, service_lines = summarize_log_for_legend(
+                devlog, limit=config.legend_limit
+            )
             if include_file_legend:
                 if legend_lines:
                     legend_lines += [""]
@@ -525,6 +534,10 @@ def render(config: RenderConfig) -> None:
                 if legend_lines:
                     legend_lines += [""]
                 legend_lines += ["ACTIONS", "", *action_lines]
+            if include_service_legend:
+                if legend_lines:
+                    legend_lines += [""]
+                legend_lines += ["SERVICES", "", *service_lines]
 
         if legend_lines:
             font = 24 if height >= 1080 else 18
