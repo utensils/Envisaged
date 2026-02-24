@@ -64,35 +64,96 @@
 
         virtualenv = pythonSet.mkVirtualEnv "envisaged-env" workspace.deps.default;
 
-        envisaged = pkgs.writeShellApplication {
+        runtimeDeps = [
+          virtualenv
+          pkgs.ffmpeg
+          pkgs.git
+          pkgs.gource
+          pkgs.xvfb-run
+          pkgs.bash
+          pkgs.coreutils
+          pkgs.curl
+        ];
+
+        envisaged-cli = pkgs.writeShellApplication {
           name = "envisaged";
-          runtimeInputs = [
-            virtualenv
-            pkgs.ffmpeg
-            pkgs.git
-            pkgs.gource
-            pkgs.xvfb-run
-            pkgs.bash
-            pkgs.coreutils
-            pkgs.curl
-          ];
+          runtimeInputs = runtimeDeps;
           text = ''
             exec ${virtualenv}/bin/envisaged "$@"
           '';
+        };
+
+        envisaged-web = pkgs.writeShellApplication {
+          name = "envisaged-web";
+          runtimeInputs = runtimeDeps;
+          text = ''
+            exec ${virtualenv}/bin/envisaged-web "$@"
+          '';
+        };
+
+        lastModified = self.lastModifiedDate or "19700101000000";
+        dockerCreated =
+          "${builtins.substring 0 4 lastModified}-${builtins.substring 4 2 lastModified}-${builtins.substring 6 2 lastModified}"
+          + "T${builtins.substring 8 2 lastModified}:${builtins.substring 10 2 lastModified}:${builtins.substring 12 2 lastModified}Z";
+
+        dockerRoot = pkgs.buildEnv {
+          name = "envisaged-docker-root";
+          paths = runtimeDeps ++ [ envisaged-cli envisaged-web ];
+          pathsToLink = [ "/bin" ];
+        };
+
+        docker-cli = pkgs.dockerTools.buildImage {
+          name = "envisaged-cli";
+          tag = "latest";
+          created = dockerCreated;
+          copyToRoot = dockerRoot;
+          config = {
+            Cmd = [ "/bin/envisaged" ];
+            WorkingDir = "/work";
+            Env = [ "PATH=/bin" ];
+          };
+        };
+
+        docker-web = pkgs.dockerTools.buildImage {
+          name = "envisaged-web";
+          tag = "latest";
+          created = dockerCreated;
+          copyToRoot = dockerRoot;
+          config = {
+            Cmd = [ "/bin/envisaged-web" ];
+            ExposedPorts = { "8787/tcp" = { }; };
+            WorkingDir = "/work";
+            Env = [ "PATH=/bin" ];
+          };
         };
 
         treefmtEval = treefmt-nix.lib.evalModule pkgs ./treefmt.nix;
       in
       {
         packages = {
-          default = envisaged;
-          envisaged = envisaged;
+          default = envisaged-cli;
+          cli = envisaged-cli;
+          web = envisaged-web;
+          envisaged = envisaged-cli;
+          envisaged-web = envisaged-web;
+          docker-cli = docker-cli;
+          docker-web = docker-web;
           venv = virtualenv;
         };
 
-        apps.default = {
-          type = "app";
-          program = "${envisaged}/bin/envisaged";
+        apps = {
+          default = {
+            type = "app";
+            program = "${envisaged-cli}/bin/envisaged";
+          };
+          cli = {
+            type = "app";
+            program = "${envisaged-cli}/bin/envisaged";
+          };
+          web = {
+            type = "app";
+            program = "${envisaged-web}/bin/envisaged-web";
+          };
         };
 
         formatter = treefmtEval.config.build.wrapper;
@@ -102,16 +163,11 @@
         };
 
         devShells.default = pkgs.mkShell {
-          packages = [
-            virtualenv
+          packages = runtimeDeps ++ [
             pkgs.uv
             pkgs.ruff
             pkgs.pyright
             pkgs.treefmt
-            pkgs.ffmpeg
-            pkgs.git
-            pkgs.gource
-            pkgs.xvfb-run
           ];
 
           env = {
@@ -123,7 +179,7 @@
           shellHook = ''
             unset PYTHONPATH
             echo "Envisaged dev shell"
-            echo "Commands: uv run envisaged --help | ruff check . | pyright"
+            echo "Commands: uv run envisaged --help | uv run envisaged-web | ruff check . | pyright"
           '';
         };
       }

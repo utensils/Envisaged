@@ -17,14 +17,30 @@ This project is now a proper Python application with:
 ### Nix
 
 ```bash
-# Show help
+# CLI (default app)
 nix run . -- --help
+
+# Explicit app targets
+nix run .#cli -- --help
+nix run .#web
 
 # Render current repo
 nix run . -- -o output.mp4 -t "Repo History" .
 
 # Render multi-repo compare
 nix run . -- --multi-dir ~/Projects/utensils --template compare-panel --sync-timing auto -o compare.mp4
+```
+
+### Nix build targets
+
+```bash
+# Native package builds
+nix build .#cli
+nix build .#web
+
+# Docker image builds
+nix build .#docker-cli
+nix build .#docker-web
 ```
 
 ### uv (local dev)
@@ -110,6 +126,7 @@ nix fmt
 - `split-quad` in `--multi-dir` mode uses the first 4 repos as distinct panes.
 - Web repo search clones/updates GitHub repos in `/tmp/envisaged-web-repos` for local rendering.
 - Render outputs from web mode are written to `~/.openclaw/workspace/out/web/`.
+- Docker images are built via Nix (`docker-cli` / `docker-web`) and stamped with the flake commit timestamp as image creation time.
 
 ## License
 
