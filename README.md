@@ -43,6 +43,14 @@ nix build .#docker-cli
 nix build .#docker-web
 ```
 
+### GitHub Actions container publishing
+
+On every push to `main`, GitHub Actions builds and publishes both Nix Docker images to GHCR:
+
+- `ghcr.io/<owner>/envisaged-cli:latest`
+- `ghcr.io/<owner>/envisaged-web:latest`
+- immutable SHA tags are also published: `:sha-<12-char-commit>`
+
 ### uv (local dev)
 
 ```bash

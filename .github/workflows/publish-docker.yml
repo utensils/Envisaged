@@ -1,0 +1,67 @@
+name: Publish Nix Docker Images
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: docker-cli
+            image: envisaged-cli
+          - target: docker-web
+            image: envisaged-web
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v14
+
+      - name: Enable Nix cache
+        uses: DeterminateSystems/magic-nix-cache-action@v8
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build Nix docker image (${{ matrix.target }})
+        run: nix build .#${{ matrix.target }}
+
+      - name: Load image into Docker
+        run: docker load < result
+
+      - name: Tag and push image
+        env:
+          IMAGE_NAME: ${{ matrix.image }}
+          GIT_SHA: ${{ github.sha }}
+          REF: ${{ github.ref }}
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          set -euo pipefail
+
+          OWNER_LC="${OWNER,,}"
+          DEST_BASE="ghcr.io/${OWNER_LC}/${IMAGE_NAME}"
+          SOURCE_IMAGE="${IMAGE_NAME}:latest"
+          SHA_TAG="sha-${GIT_SHA:0:12}"
+
+          docker tag "${SOURCE_IMAGE}" "${DEST_BASE}:${SHA_TAG}"
+          docker push "${DEST_BASE}:${SHA_TAG}"
+
+          if [ "${REF}" = "refs/heads/main" ]; then
+            docker tag "${SOURCE_IMAGE}" "${DEST_BASE}:latest"
+            docker push "${DEST_BASE}:latest"
+          fi
