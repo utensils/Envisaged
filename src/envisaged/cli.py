@@ -614,6 +614,8 @@ def render(config: RenderConfig) -> None:
             f"template={config.template}, sync={sync_timing}"
         )
 
+        hide_flags = "mouse,date,filenames" if config.system_log else "usernames,mouse,date,filenames"
+
         if use_quad_multi:
             console.print(f"Quad mode: using 4 distinct repos ({' '.join(quad_repo_names)})")
             tmp_videos: list[Path] = []
@@ -625,7 +627,7 @@ def render(config: RenderConfig) -> None:
                     "SDL_VIDEODRIVER=x11 xvfb-run -a -s '-screen 0 {w}x{h}x24' gource "
                     "--seconds-per-day {spd} --user-scale {us} --time-scale {ts} --auto-skip-seconds {as_} "
                     "--title '{title} — {repo}' --background-colour 000000 --font-colour FFFFFF "
-                    "--camera-mode overview --hide usernames,mouse,date,filenames --font-size 42 "
+                    "--camera-mode overview --hide {hide_flags} --font-size 42 "
                     "--dir-name-depth 3 --filename-time 2 --max-user-speed 500 --bloom-multiplier 1.2 "
                     "--{iw}x{ih} --stop-at-end '{log}' -r {fps} -o -"
                 ).format(
@@ -637,6 +639,7 @@ def render(config: RenderConfig) -> None:
                     as_=config.auto_skip,
                     title=config.title,
                     repo=quad_repo_names[i],
+                    hide_flags=hide_flags,
                     iw=inner_w,
                     ih=inner_h,
                     log=repo_logs[i],
@@ -678,7 +681,7 @@ def render(config: RenderConfig) -> None:
                 "SDL_VIDEODRIVER=x11 xvfb-run -a -s '-screen 0 {w}x{h}x24' gource "
                 "--seconds-per-day {spd} --user-scale {us} --time-scale {ts} --auto-skip-seconds {as_} "
                 "--title '{title}' --background-colour 000000 --font-colour FFFFFF --camera-mode overview "
-                "--hide usernames,mouse,date,filenames --font-size 42 --dir-name-depth 3 --filename-time 2 "
+                "--hide {hide_flags} --font-size 42 --dir-name-depth 3 --filename-time 2 "
                 "--max-user-speed 500 --bloom-multiplier 1.2 --{iw}x{ih} --stop-at-end '{log}' -r {fps} -o - > '{pipe}'"
             ).format(
                 w=width,
@@ -688,6 +691,7 @@ def render(config: RenderConfig) -> None:
                 ts=config.time_scale,
                 as_=config.auto_skip,
                 title=config.title,
+                hide_flags=hide_flags,
                 iw=inner_w,
                 ih=inner_h,
                 log=devlog,
