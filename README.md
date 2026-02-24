@@ -41,6 +41,16 @@ uv run envisaged-web
 # open http://127.0.0.1:8787
 ```
 
+Nix shell launch:
+
+```bash
+nix develop -c uv run envisaged-web
+```
+
+Network access:
+- local: `http://127.0.0.1:8787`
+- LAN/Tailscale: `http://<host-ip>:8787`
+
 The web interface uses the same urandom-style visual language (zinc dark base, JetBrains Mono, gradient accents, subtle noise overlay) and is mobile-first.
 
 Web UI extras:
@@ -98,6 +108,8 @@ nix fmt
 - Supported FPS values are constrained by Gource: `25`, `30`, `60`.
 - Multi-repo overlays (legend/relationship) are rendered line-by-line via drawtext for broad font compatibility.
 - `split-quad` in `--multi-dir` mode uses the first 4 repos as distinct panes.
+- Web repo search clones/updates GitHub repos in `/tmp/envisaged-web-repos` for local rendering.
+- Render outputs from web mode are written to `~/.openclaw/workspace/out/web/`.
 
 ## License
 
