@@ -1,0 +1,63 @@
+[project]
+name = "envisaged"
+version = "0.2.0"
+description = "Nix-first Git history visualizations powered by Gource + FFmpeg"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "utensils" }]
+dependencies = [
+  "fastapi>=0.116.0",
+  "jinja2>=3.1.6",
+  "python-multipart>=0.0.20",
+  "rich>=13.9.0",
+  "typer>=0.16.0",
+  "uvicorn>=0.35.0",
+]
+
+[project.scripts]
+envisaged = "envisaged.cli:main"
+envisaged-web = "envisaged.web:main"
+
+[dependency-groups]
+dev = [
+  "pyright>=1.1.390",
+  "ruff>=0.12.10",
+]
+
+[build-system]
+requires = ["hatchling>=1.27.0"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build]
+include = [
+  "src/envisaged/web_templates/*.html",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/envisaged"]
+
+[tool.uv]
+default-groups = ["dev"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+src = ["src"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+ignore = ["E501", "B008", "UP032"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.pyright]
+pythonVersion = "3.11"
+typeCheckingMode = "basic"
+include = ["src"]
+venvPath = "."
+venv = ".venv"
+reportMissingImports = true
+reportMissingTypeStubs = false

@@ -1,127 +1,143 @@
-# Envisaged - Dockerized Gource Visualizations
+# Envisaged
 
-[![CircleCI](https://circleci.com/gh/utensils/Envisaged.svg?style=svg)](https://circleci.com/gh/utensils/Envisaged) [![Docker Automated build](https://img.shields.io/docker/automated/utensils/envisaged.svg)](https://hub.docker.com/r/utensils/envisaged/) [![Docker Pulls](https://img.shields.io/docker/pulls/utensils/envisaged.svg)](https://hub.docker.com/r/utensils/envisaged/) [![Docker Stars](https://img.shields.io/docker/stars/utensils/envisaged.svg)](https://hub.docker.com/r/utensils/envisaged/) [![](https://images.microbadger.com/badges/image/utensils/envisaged.svg)](https://microbadger.com/images/utensils/envisaged "Get your own image badge on microbadger.com") [![](https://images.microbadger.com/badges/version/utensils/envisaged.svg)](https://microbadger.com/images/utensils/envisaged "Get your own version badge on microbadger.com")
+Nix-first Git history visualizations powered by **Gource + FFmpeg**.
 
-Built on top of [`utensils/opengl:stable`][utensils/opengl] (Alpine 3.12). **No GPU is required**, this will run on any machine, such as a standard EC2 instance or any other VPS.  
+This project is now a proper Python application with:
 
-## About
+- `src/envisaged` package layout
+- Rich + Typer CLI
+- template system for core/compare/split/relation families
+- `uv` project management (`pyproject.toml` + `uv.lock`)
+- `uv2nix` packaging in `flake.nix`
+- linting/type-checking via Ruff + Pyright
+- repo-wide formatting via treefmt
 
-Painless data visualizations from git history showing a repositories development progression over time.  
-This container combines the awesome [Gource][gource] program with the power of [FFmpeg][ffmpeg_home] and the h.264 codec to bring you high resolution (up to 4k at 60fps) video visualizations.
+## Quick start
 
-This container is 100% headless, it does this by leveraging [Xvfb][xvfb] combined with the [Mesa 3d Gallium llvmpipe Driver][mesa]. Unlike other docker containers with Gource, this container does not eat up 100's of gigabtyes of disk space, nor does it require an actual GPU to run. The process runs the Gource simulation concurrently with the FFmpeg encoding process using a set of named pipes. There is a slight trade off in performance, but this makes it very easy to run in any environment such as AWS without the need to provision large amounts of storage, or run any cleanup.  
+### Nix
 
-Envisaged uses "template" scripts to generate specific looks, such as the one included in this container which is simply called **border** which places a frame around the Gource visualization and isolates the date and key on the outside of this border. If you would like to run the container with normal Gource output, simply pass `-e TEMPLATE=none` and it will use the `no_template.sh` script.
+```bash
+# CLI (default app)
+nix run . -- --help
 
+# Explicit app targets
+nix run .#cli -- --help
+nix run .#web
 
+# Render current repo
+nix run . -- -o output.mp4 -t "Repo History" .
 
-This container is configurable through environment variables listed below. The generated video is delivered via HTTP.
+# Render multi-repo compare
+nix run . -- --multi-dir ~/Projects/utensils --template compare-panel --sync-timing auto -o compare.mp4
+```
+
+### Nix build targets
+
+```bash
+# Native package builds
+nix build .#cli
+nix build .#web
+
+# Docker image builds
+nix build .#docker-cli
+nix build .#docker-web
+```
+
+### uv (local dev)
+
+```bash
+uv sync
+uv run envisaged --help
+```
+
+### Web UI (Tailwind 4.1)
+
+```bash
+uv run envisaged-web
+# open http://127.0.0.1:8787
+```
+
+Nix shell launch:
+
+```bash
+nix develop -c uv run envisaged-web
+```
+
+Network access:
+- local: `http://127.0.0.1:8787`
+- LAN/Tailscale: `http://<host-ip>:8787`
+
+The web interface uses the same urandom-style visual language (zinc dark base, JetBrains Mono, gradient accents, subtle noise overlay) and is mobile-first.
+
+Web UI extras:
+- GitHub-like repo search (`owner/repo` picker)
+- selected GitHub repos are cloned/updated locally under `/tmp/envisaged-web-repos`
+- POST/redirect/GET flow avoids browser “submit form again” prompts
+
+## CLI usage
+
+```bash
+envisaged [OPTIONS] [REPO]
+```
+
+- `REPO`: local git repo path or remote git URL
+- `--multi-dir <path>`: render all git repos under a directory
+
+### Template families
+
+- **Core:** `none`, `border`, `neon`, `sunset`, `matrix`, `blueprint`, `noir`
+- **Compare:** `compare-panel`, `compare-neon`, `compare-blueprint`, `compare-matrix`, `compare-noir`
+- **Split:** `split-quad`, `split-vertical`, `split-triple`, `split-focus`, `split-matrix`
+- **Relationship:** `relation-panel`, `relation-neon`, `relation-blueprint`, `relation-noir`, `relation-sunset`
+
+### Sync modes
+
+- `--sync-timing false`: original log timing
+- `--sync-timing true`: normalized unified timeline
+- `--sync-timing smart`: normalized timeline + blank-log pulse anchors
+- `--sync-timing auto`: smart mode for compare/split/relation templates in multi-repo mode
 
 ## Example videos
 
+Legacy showcase renders from the original Envisaged project:
 
-| GitHub Repo                    | YouTube Video                                                                                                                                                                                                                     |
-| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [Elixir School][elixir-school] | <a href="http://www.youtube.com/watch?feature=player_embedded&v=twpR-opLrZU" target="_blank"><img src="http://img.youtube.com/vi/twpR-opLrZU/0.jpg" alt="Elixir School Visualization" width="240" height="180" border="10" /></a> |
-| [Kubernetes][kubernetes]       | <a href="http://www.youtube.com/watch?feature=player_embedded&v=UTwxiwF7Zac" target="_blank"><img src="http://img.youtube.com/vi/UTwxiwF7Zac/0.jpg" alt="Kubernetes Visualization" width="240" height="180" border="10" /></a>    |
-| [Elixir Lang][elixir]          | <a href="http://www.youtube.com/watch?feature=player_embedded&v=wl5uuvDK3ao" target="_blank"><img src="http://img.youtube.com/vi/wl5uuvDK3ao/0.jpg" alt="Elixir Lang Visualization" width="240" height="180" border="10" /></a>   |
+| Repo | Video |
+|---|---|
+| Elixir School | [![Elixir School Visualization](http://img.youtube.com/vi/twpR-opLrZU/0.jpg)](http://www.youtube.com/watch?feature=player_embedded&v=twpR-opLrZU) |
+| Kubernetes | [![Kubernetes Visualization](http://img.youtube.com/vi/UTwxiwF7Zac/0.jpg)](http://www.youtube.com/watch?feature=player_embedded&v=UTwxiwF7Zac) |
+| Elixir Lang | [![Elixir Lang Visualization](http://img.youtube.com/vi/wl5uuvDK3ao/0.jpg)](http://www.youtube.com/watch?feature=player_embedded&v=wl5uuvDK3ao) |
 
+## Project structure
 
-
-
-## Usage Examples
-
-Run with the default settings which will create a visualization of the Docker GitHub repository.  
-Notice we are **exposing port 80**, the final video will be served at <http://localhost:8080/>  
-
-The following example will run a visualization on the Kubernetes GitHub repository and include the Kubernetes logo
-in the video.
-
-```shell
-docker run --rm -p 8080:80 --name envisaged \
-       -e GIT_URL=https://github.com/kubernetes/kubernetes.git \
-       -e LOGO_URL=https://raw.githubusercontent.com/kubernetes/kubernetes/master/logo/logo.png \
-       -e GOURCE_TITLE="Kubernetes Development" \
-       utensils/envisaged
+```text
+src/envisaged/
+  cli.py        # Rich/Typer CLI and render orchestration
+  templates.py  # template family definitions
+scripts/envisaged  # compatibility shim -> Python CLI
+pyproject.toml
+uv.lock
+flake.nix       # uv2nix packaging + dev shell
+treefmt.nix
 ```
 
-Running a visualization against a local git repo.  
+## Linting & formatting
 
-```
-docker run --rm -p 8080:80 --name envisaged \
-       -v /path/to/your/repo:/visualization/git_repo:ro \
-       -e GOURCE_TITLE="Your Project Development" \
-       utensils/envisaged
-```
-
-You can also combine multiple repositories into a single rendering by mounting a directory of repository
-directories onto `/visualization/git_repos` (the plural of `visualization/git_repo`).
-
-```
-docker run --rm -p 8080:80 --name envisaged \
-       -v /path/to/your/repos:/visualization/git_repos:ro \
-       -e GOURCE_TITLE="Your Project Development" \
-       utensils/envisaged
+```bash
+uv run ruff check .
+uv run ruff format .
+uv run pyright
+nix fmt
 ```
 
-Optionally, you can have gource render avatars of the authors by mounting a volume with images of the authors.
+## Notes
 
-```
-docker run --rm -p 8080:80 --name envisaged \
-       -v /path/to/your/repo:/visualization/git_repo:ro \
-       -v /path/to/your/avatars:/visualization/avatars:ro \
-       -e GOURCE_TITLE="Your Project Development" \
-       utensils/envisaged
-```
+- Supported FPS values are constrained by Gource: `25`, `30`, `60`.
+- Multi-repo overlays (legend/relationship) are rendered line-by-line via drawtext for broad font compatibility.
+- `split-quad` in `--multi-dir` mode uses the first 4 repos as distinct panes.
+- Web repo search clones/updates GitHub repos in `/tmp/envisaged-web-repos` for local rendering.
+- Render outputs from web mode are written to `~/.openclaw/workspace/out/web/`.
+- Docker images are built via Nix (`docker-cli` / `docker-web`) and stamped with the flake commit timestamp as image creation time.
 
-The avatars in that directory must have filenames that match the author id, e.g. `utensils.gif`, etc.
+## License
 
-Now open your browser to <http://localhost:8080/> and once the video is completed you will see the link with the video size.
-
-## Environment Variables
-
-| Variable                   | Default Value                    | Description                                                                                                 |
-| -------------------------- | -------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `GIT_URL`                  | `<docker repo on GH>`            | URL of git repository to be cloned and analyzed for visualization.                                          |
-| `LOGO_URL`                 | `<docker logo>`                  | URL of logo to be overlayed in lower right hand corner of video.                                            |
-| `H264_PRESET`              | `medium`                         | h.264 encoding preset. refer to [FFmpeg's wiki][ffmpeg].                                                    |
-| `H264_CRF`                 | `23`                             | The Constant Rate Factor (CRF) is the default quality for h.264 encoding. refer to [FFmpeg's wiki][ffmpeg]. |
-| `H264_LEVEL`               | `5.1`                            | h.264 encoding level. Refer to [FFmpeg's wiki][ffmpeg].                                                     |
-| `VIDEO_RESOLUTION`         | `1080p`                          | Output video resolution, options are **2160p, 1440p, 1080p, 720p**                                          |
-| `GOURCE_FPS`         | `60`                          | Output video frame rate                                          |
-| `TEMPLATE`                 | `border`                         | This is the template script that will be run. Options are **border**, and **none**.                         |
-| `GOURCE_TITLE`             | `Software Development`           | Title to be displayed in the lower left hand corner of video.                                               |
-| `OVERLAY_FONT_COLOR`       | `0f5ca8`                         | Font color to be used on the overlay (Date only).                                                           |
-| `GOURCE_CAMERA_MODE`       | `overview`                       | Camera mode (overview, track).                                                                              |
-| `GOURCE_SECONDS_PER_DAY`   | `0.1`                            | Speed of simulation in seconds per day.                                                                     |
-| `GOURCE_TIME_SCALE`        | `1.5`                            | Change simulation time scale.                                                                               |
-| `GOURCE_USER_SCALE`        | `1.5`                            | Change scale of user avatars.                                                                               |
-| `GOURCE_AUTO_SKIP_SECONDS` | `0.5`                            | Skip to next entry if nothing happens for a number of seconds.                                              |
-| `GOURCE_BACKGROUND_COLOR`  | `000000`                         | Background color in hex.                                                                                    |
-| `GOURCE_TEXT_COLOR`        | `FFFFFF`                         | **Not Implemented.**                                                                                        |
-| `GOURCE_HIDE_ITEMS`        | `usernames,mouse,date,filenames` | Hide one or more display elements                                                                           |
-| `GOURCE_FONT_SIZE`         | `48`                             | **Not Implemented.**                                                                                        |
-| `GOURCE_DIR_DEPTH`         | `3`                              | Draw names of directories down to a specific depth in the tree.                                             |
-| `GOURCE_FILENAME_TIME`     | `2`                              | Duration to keep filenames on screen (>= 2.0).                                                              |
-| `GOURCE_MAX_USER_SPEED`    | `500`                            | Max speed users can travel per second.                                                                      |
-| `INVERT_COLORS`            | `false`                          | Inverts the colors on the visualization.                                                                    |
-
-[alpine linux image]: https://github.com/gliderlabs/docker-alpine
-
-[gource]: https://github.com/acaudwell/Gource
-
-[ffmpeg_home]: https://www.ffmpeg.org/
-
-[xvfb]: https://www.x.org/archive/X11R7.6/doc/man/man1/Xvfb.1.xhtml
-
-[mesa]: https://www.mesa3d.org/llvmpipe.html
-
-[ffmpeg]: https://trac.ffmpeg.org/wiki/Encode/H.264
-
-[utensils/opengl]: https://github.com/utensils/docker-opengl
-
-[elixir-school]: https://github.com/elixirschool/elixirschool
-
-[kubernetes]: https://github.com/kubernetes/kubernetes
-
-[elixir]: https://elixir-lang.org/
+MIT
