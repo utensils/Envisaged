@@ -80,6 +80,7 @@
               <select id="mode" name="mode" class="form-select w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm">
                 <option value="single" selected>Single Repo</option>
                 <option value="multi">Multi Repo</option>
+                <option value="system">System Log</option>
               </select>
             </label>
             <label class="block">
@@ -114,6 +115,25 @@
               class="form-textarea w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm">{{ default_multi_repos }}</textarea>
             <span class="mt-1 block text-xs text-zinc-500">If provided, these repos are used (cloned/updated locally in /tmp) and rendered together.</span>
           </label>
+
+          <div id="system-group" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <label class="block">
+              <span class="mb-1 block text-[11px] uppercase label-meta text-zinc-500">System Source</span>
+              <select name="system_log" class="form-select w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm">
+                <option value="journal">journal</option>
+                <option value="kernel">kernel</option>
+                <option value="auth">auth</option>
+              </select>
+            </label>
+            <label class="block sm:col-span-2">
+              <span class="mb-1 block text-[11px] uppercase label-meta text-zinc-500">Since</span>
+              <input name="system_log_since" value="24 hours ago" class="form-input w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm" />
+            </label>
+            <label class="block">
+              <span class="mb-1 block text-[11px] uppercase label-meta text-zinc-500">Entry Limit</span>
+              <input name="system_log_limit" type="number" min="100" max="50000" value="5000" class="form-input w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm" />
+            </label>
+          </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
             <label class="block">
@@ -202,13 +222,25 @@
       const repoInput = document.getElementById('repo-input');
       const multiReposEl = document.getElementById('multi-repos');
       const multiReposGroup = document.getElementById('multi-repos-group');
+      const systemGroup = document.getElementById('system-group');
       const refreshBtn = document.getElementById('refresh-btn');
 
       function updateModeVisibility() {
-        const single = modeEl.value === 'single';
+        const mode = modeEl.value;
+        const single = mode === 'single';
+        const multi = mode === 'multi';
+        const system = mode === 'system';
+
         repoGroup.classList.toggle('opacity-50', !single);
-        multiGroup.classList.toggle('opacity-50', single);
-        multiReposGroup.classList.toggle('opacity-50', single);
+        repoGroup.classList.toggle('hidden', !single);
+
+        multiGroup.classList.toggle('opacity-50', !multi);
+        multiGroup.classList.toggle('hidden', !multi);
+        multiReposGroup.classList.toggle('opacity-50', !multi);
+        multiReposGroup.classList.toggle('hidden', !multi);
+
+        systemGroup.classList.toggle('opacity-50', !system);
+        systemGroup.classList.toggle('hidden', !system);
       }
 
       modeEl.addEventListener('change', updateModeVisibility);

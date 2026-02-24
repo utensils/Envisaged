@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+import re
 import shutil
 import subprocess
 import tempfile
@@ -18,6 +20,7 @@ console = Console()
 Resolution = Literal["2160p", "1440p", "1080p", "720p"]
 SyncMode = Literal["auto", "true", "false", "smart"]
 LegendMode = Literal["auto", "none", "repos", "files", "actions", "all"]
+SystemLogSource = Literal["journal", "kernel", "auth"]
 
 RESOLUTION_MAP: dict[str, tuple[int, int]] = {
     "2160p": (3840, 2160),
@@ -39,6 +42,9 @@ class RenderConfig:
     logo: str | None
     multi_dir: Path | None
     input_repo: str | None
+    system_log: SystemLogSource | None
+    system_log_since: str
+    system_log_limit: int
     sync_timing: SyncMode
     sync_span: int
     legend: LegendMode
@@ -78,6 +84,82 @@ def ffmpeg_escape(text: str) -> str:
     ]:
         value = value.replace(a, b)
     return value
+
+
+def sanitize_log_token(text: str) -> str:
+    cleaned = re.sub(r"[^A-Za-z0-9._-]+", "-", text.strip().lower())
+    cleaned = re.sub(r"-+", "-", cleaned).strip("-")
+    return cleaned or "unknown"
+
+
+def build_system_log(
+    *,
+    out_log: Path,
+    source: SystemLogSource,
+    since: str,
+    limit: int,
+) -> None:
+    require_bin("journalctl")
+
+    cmd = ["journalctl", "--no-pager", "-o", "json", "--since", since, "-n", str(limit)]
+    if source == "kernel":
+        cmd.insert(1, "-k")
+
+    proc = subprocess.run(cmd, check=True, capture_output=True, text=True)
+
+    auth_markers = ["auth", "sudo", "sshd", "login", "password", "pam", "session", "su["]
+
+    rows: list[str] = []
+    for raw in proc.stdout.splitlines():
+        raw = raw.strip()
+        if not raw or not raw.startswith("{"):
+            continue
+
+        try:
+            entry = json.loads(raw)
+        except json.JSONDecodeError:
+            continue
+
+        ts_raw = entry.get("__REALTIME_TIMESTAMP")
+        if ts_raw is None:
+            continue
+
+        try:
+            ts = int(int(ts_raw) / 1_000_000)
+        except (TypeError, ValueError):
+            continue
+
+        msg = str(entry.get("MESSAGE", "")).strip()
+        if not msg:
+            continue
+
+        msg_lower = msg.lower()
+        if source == "auth" and not any(marker in msg_lower for marker in auth_markers):
+            continue
+
+        actor = (
+            entry.get("SYSLOG_IDENTIFIER")
+            or entry.get("_SYSTEMD_UNIT")
+            or entry.get("_COMM")
+            or "system"
+        )
+        actor_text = sanitize_log_token(str(actor))
+
+        action = "M"
+        if any(k in msg_lower for k in ["started", "connected", "accepted", "opened", "mounted"]):
+            action = "A"
+        elif any(k in msg_lower for k in ["failed", "denied", "error", "stopped", "closed", "disconnected"]):
+            action = "D"
+
+        message_head = sanitize_log_token(msg.split(":", 1)[0][:56])
+        path = f"/system/{source}/{actor_text}/{message_head}"
+        rows.append(f"{ts}|{actor_text}|{action}|{path}")
+
+    if not rows:
+        raise typer.BadParameter("No matching journal entries found for selected system log source")
+
+    rows.sort(key=lambda line: int(line.split("|", 1)[0]))
+    out_log.write_text("\n".join(rows) + "\n", encoding="utf-8")
 
 
 def normalize_log_timestamps(in_log: Path, out_log: Path, sync_span: int) -> None:
@@ -344,8 +426,10 @@ def overlay_lines_filter(
 
 
 def render(config: RenderConfig) -> None:
-    for bin_name in ["git", "gource", "ffmpeg", "xvfb-run", "bash"]:
+    for bin_name in ["gource", "ffmpeg", "xvfb-run", "bash"]:
         require_bin(bin_name)
+    if not config.system_log:
+        require_bin("git")
 
     width, height = RESOLUTION_MAP[config.resolution]
     if config.fps not in ALLOWED_FPS:
@@ -373,7 +457,15 @@ def render(config: RenderConfig) -> None:
         repo_names: list[str] = []
         repo_logs: list[Path] = []
 
-        if config.multi_dir:
+        if config.system_log:
+            devlog = workdir / "system.log"
+            build_system_log(
+                out_log=devlog,
+                source=config.system_log,
+                since=config.system_log_since,
+                limit=config.system_log_limit,
+            )
+        elif config.multi_dir:
             repo_names, repo_logs, devlog = build_multi_logs(
                 config.multi_dir, log_dir, sync_timing, config.sync_span
             )
@@ -682,6 +774,9 @@ def cli(
     template: str = typer.Option(DEFAULT_TEMPLATE, "--template"),
     logo: str | None = typer.Option(None, "--logo"),
     multi_dir: Path | None = typer.Option(None, "--multi-dir"),
+    system_log: SystemLogSource | None = typer.Option(None, "--system-log"),
+    system_log_since: str = typer.Option("24 hours ago", "--system-log-since"),
+    system_log_limit: int = typer.Option(5000, "--system-log-limit"),
     sync_timing: SyncMode = typer.Option("auto", "--sync-timing"),
     sync_span: int = typer.Option(31536000, "--sync-span"),
     legend: LegendMode = typer.Option("auto", "--legend"),
@@ -694,14 +789,18 @@ def cli(
     preset: str = typer.Option("medium", "--preset"),
 ) -> None:
     """Render Git history videos with Gource + FFmpeg."""
+    if system_log and (multi_dir or repo):
+        raise typer.BadParameter("Use either --system-log or a repo/multi-dir input, not both")
     if multi_dir and repo:
         raise typer.BadParameter("Use either <repo> or --multi-dir, not both")
-    if not multi_dir and not repo:
-        raise typer.BadParameter("Provide either a repo input or --multi-dir")
+    if not system_log and not multi_dir and not repo:
+        raise typer.BadParameter("Provide a repo input, --multi-dir, or --system-log")
     if template not in TEMPLATES:
         raise typer.BadParameter(f"Unsupported template: {template}")
     if legend_limit < 1:
         raise typer.BadParameter("--legend-limit must be >= 1")
+    if system_log_limit < 1:
+        raise typer.BadParameter("--system-log-limit must be >= 1")
 
     cfg = RenderConfig(
         output=output,
@@ -712,6 +811,9 @@ def cli(
         logo=logo,
         multi_dir=multi_dir,
         input_repo=repo,
+        system_log=system_log,
+        system_log_since=system_log_since,
+        system_log_limit=system_log_limit,
         sync_timing=sync_timing,
         sync_span=sync_span,
         legend=legend,

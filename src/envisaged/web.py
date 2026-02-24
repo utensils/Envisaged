@@ -25,6 +25,7 @@ from .templates import DEFAULT_TEMPLATE, TEMPLATES
 OutputResolution = Literal["2160p", "1440p", "1080p", "720p"]
 SyncMode = Literal["auto", "true", "false", "smart"]
 LegendMode = Literal["auto", "none", "repos", "files", "actions", "all"]
+SystemLogSource = Literal["journal", "kernel", "auth"]
 
 BASE_DIR = Path(__file__).resolve().parent
 TEMPLATES_DIR = BASE_DIR / "web_templates"
@@ -274,6 +275,9 @@ def create_render(
     sync_timing: SyncMode = Form("auto"),
     legend: LegendMode = Form("auto"),
     legend_limit: int = Form(8),
+    system_log: SystemLogSource = Form("journal"),
+    system_log_since: str = Form("24 hours ago"),
+    system_log_limit: int = Form(5000),
 ) -> RedirectResponse:
     job_id = uuid4().hex[:8]
     output_name = f"{datetime.now().strftime('%Y%m%d-%H%M%S')}-{job_id}.mp4"
@@ -282,11 +286,16 @@ def create_render(
     try:
         repo_source = repo
         multi_source: Path | None = None
+        system_source: SystemLogSource | None = None
 
         if mode == "single":
             repo_source = str(_resolve_repo_to_local(repo))
-        else:
+        elif mode == "multi":
             multi_source = _prepare_multi_repo_dir(job_id, multi_repos, multi_dir)
+        elif mode == "system":
+            system_source = system_log
+        else:
+            raise ValueError(f"Unsupported mode: {mode}")
 
         cfg = RenderConfig(
             output=output_path,
@@ -297,6 +306,9 @@ def create_render(
             logo=None,
             multi_dir=multi_source if mode == "multi" else None,
             input_repo=repo_source if mode == "single" else None,
+            system_log=system_source,
+            system_log_since=system_log_since,
+            system_log_limit=system_log_limit,
             sync_timing=sync_timing,
             sync_span=31536000,
             legend=legend,

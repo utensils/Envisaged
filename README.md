@@ -29,6 +29,9 @@ nix run . -- -o output.mp4 -t "Repo History" .
 
 # Render multi-repo compare
 nix run . -- --multi-dir ~/Projects/utensils --template compare-panel --sync-timing auto -o compare.mp4
+
+# Render system logs (journalctl -> timeline)
+nix run . -- --system-log journal --system-log-since "24 hours ago" --template tokyo-night --legend all -o system-journal.mp4
 ```
 
 ### Nix build targets
@@ -84,6 +87,7 @@ The web interface uses the same urandom-style visual language (zinc dark base, J
 
 Web UI extras:
 - defaults to **single-repo** mode for fast one-off renders
+- includes **System Log** mode (`journal`, `kernel`, `auth`) for machine activity timelines
 - GitHub-like repo search (`owner/repo` picker)
 - selected GitHub repos are cloned/updated locally under `/tmp/envisaged-web-repos`
 - POST/redirect/GET flow avoids browser “submit form again” prompts
@@ -121,6 +125,9 @@ envisaged [OPTIONS] [REPO]
 
 - `REPO`: local git repo path or remote git URL
 - `--multi-dir <path>`: render all git repos under a directory
+- `--system-log <journal|kernel|auth>`: render system logs as a timeline
+- `--system-log-since "<time expr>"`: journalctl since selector (default `24 hours ago`)
+- `--system-log-limit <n>`: max journal entries to ingest (default `5000`)
 
 ### Template families
 
