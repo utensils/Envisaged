@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 import subprocess
@@ -28,9 +29,11 @@ BASE_DIR = Path(__file__).resolve().parent
 TEMPLATES_DIR = BASE_DIR / "web_templates"
 WEB_OUTPUT_DIR = Path.home() / ".openclaw" / "workspace" / "out" / "web"
 REPO_CACHE_DIR = Path("/tmp/envisaged-web-repos")
+MULTI_REPO_WORK_DIR = Path("/tmp/envisaged-web-multi")
 
 WEB_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 REPO_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+MULTI_REPO_WORK_DIR.mkdir(parents=True, exist_ok=True)
 
 app = FastAPI(title="Envisaged Web")
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
@@ -129,6 +132,71 @@ def _ensure_local_repo(repo_input: str) -> str:
     return str(local_dir)
 
 
+def _resolve_repo_to_local(repo_input: str) -> Path:
+    raw = repo_input.strip()
+    if not raw:
+        raise ValueError("Empty repository entry")
+
+    # Local path
+    local_path = Path(raw).expanduser()
+    if local_path.exists():
+        resolved = local_path.resolve()
+        if not (resolved / ".git").is_dir():
+            raise ValueError(f"Not a git repo: {resolved}")
+        return resolved
+
+    # GitHub shorthand/url → cached clone
+    owner_name = _repo_owner_name(raw)
+    if owner_name is not None:
+        return Path(_ensure_local_repo(raw))
+
+    # Generic git URL clone cache
+    if raw.startswith("http://") or raw.startswith("https://") or raw.startswith("git@"):
+        slug = hashlib.sha1(raw.encode("utf-8")).hexdigest()[:12]
+        local_dir = REPO_CACHE_DIR / f"remote__{slug}"
+        if (local_dir / ".git").is_dir():
+            _run(["git", "-C", str(local_dir), "remote", "set-url", "origin", raw])
+            _run(["git", "-C", str(local_dir), "fetch", "origin", "--prune"])
+            _run(["git", "-C", str(local_dir), "pull", "--ff-only"])
+        else:
+            _run(["git", "clone", raw, str(local_dir)])
+        return local_dir
+
+    raise ValueError(f"Unsupported repository input: {raw}")
+
+
+def _prepare_multi_repo_dir(job_id: str, repos_text: str, multi_dir: str) -> Path:
+    entries = [line.strip() for line in repos_text.splitlines() if line.strip()]
+
+    # Fallback to directory scanning if no explicit list provided.
+    if not entries:
+        base = Path(multi_dir).expanduser().resolve()
+        if not base.is_dir():
+            raise ValueError(f"Multi dir does not exist: {base}")
+        return base
+
+    job_dir = MULTI_REPO_WORK_DIR / job_id
+    job_dir.mkdir(parents=True, exist_ok=True)
+
+    used_names: set[str] = set()
+    for idx, entry in enumerate(entries, start=1):
+        repo_path = _resolve_repo_to_local(entry)
+        base_name = re.sub(r"[^A-Za-z0-9_.-]", "-", repo_path.name) or f"repo-{idx}"
+        name = base_name
+        n = 2
+        while name in used_names:
+            name = f"{base_name}-{n}"
+            n += 1
+        used_names.add(name)
+
+        link = job_dir / name
+        if link.exists() or link.is_symlink():
+            link.unlink()
+        link.symlink_to(repo_path, target_is_directory=True)
+
+    return job_dir
+
+
 def _search_github_repos(query: str, per_page: int = 8) -> list[dict[str, str | int | None]]:
     q = urllib.parse.quote(query)
     url = f"https://api.github.com/search/repositories?q={q}&sort=stars&order=desc&per_page={per_page}"
@@ -164,7 +232,11 @@ def _render_in_background(job_id: str, config: RenderConfig) -> None:
 
 
 @app.get("/", response_class=HTMLResponse)
-def index(request: Request, message: str | None = Query(default=None)) -> HTMLResponse:
+def index(
+    request: Request,
+    message: str | None = Query(default=None),
+    default_multi_repos: str = Query(default=""),
+) -> HTMLResponse:
     return templates.TemplateResponse(
         request,
         "index.html",
@@ -172,6 +244,7 @@ def index(request: Request, message: str | None = Query(default=None)) -> HTMLRe
             "templates": sorted(TEMPLATES.keys()),
             "jobs": _jobs_snapshot(),
             "default_multi_dir": "/tmp/envisaged-compare-src",
+            "default_multi_repos": default_multi_repos,
             "message": message,
         },
     )
@@ -191,6 +264,7 @@ def create_render(
     mode: str = Form("multi"),
     repo: str = Form("."),
     multi_dir: str = Form("/tmp/envisaged-compare-src"),
+    multi_repos: str = Form(""),
     title: str = Form("Envisaged Render"),
     template: str = Form("split-quad"),
     resolution: OutputResolution = Form("720p"),
@@ -201,28 +275,40 @@ def create_render(
     output_name = f"{datetime.now().strftime('%Y%m%d-%H%M%S')}-{job_id}.mp4"
     output_path = WEB_OUTPUT_DIR / output_name
 
-    repo_source = repo
-    if mode == "single":
-        repo_source = _ensure_local_repo(repo)
+    try:
+        repo_source = repo
+        multi_source: Path | None = None
 
-    cfg = RenderConfig(
-        output=output_path,
-        resolution=resolution,
-        fps=fps,
-        title=title,
-        template=template,
-        logo=None,
-        multi_dir=Path(multi_dir).expanduser() if mode == "multi" else None,
-        input_repo=repo_source if mode == "single" else None,
-        sync_timing=sync_timing,
-        sync_span=31536000,
-        seconds_per_day=0.12,
-        time_scale=1.6,
-        user_scale=1.35,
-        auto_skip=0.5,
-        crf=22,
-        preset="medium",
-    )
+        if mode == "single":
+            repo_source = str(_resolve_repo_to_local(repo))
+        else:
+            multi_source = _prepare_multi_repo_dir(job_id, multi_repos, multi_dir)
+
+        cfg = RenderConfig(
+            output=output_path,
+            resolution=resolution,
+            fps=fps,
+            title=title,
+            template=template,
+            logo=None,
+            multi_dir=multi_source if mode == "multi" else None,
+            input_repo=repo_source if mode == "single" else None,
+            sync_timing=sync_timing,
+            sync_span=31536000,
+            seconds_per_day=0.12,
+            time_scale=1.6,
+            user_scale=1.35,
+            auto_skip=0.5,
+            crf=22,
+            preset="medium",
+        )
+    except Exception as exc:
+        message = urllib.parse.quote(f"Error: {exc}")
+        repos_q = urllib.parse.quote(multi_repos)
+        return RedirectResponse(
+            url=f"/?message={message}&default_multi_repos={repos_q}",
+            status_code=303,
+        )
 
     _add_job(
         RenderJob(
@@ -239,7 +325,11 @@ def create_render(
     thread.start()
 
     message = urllib.parse.quote(f"Render started: {output_name}")
-    return RedirectResponse(url=f"/?message={message}", status_code=303)
+    repos_q = urllib.parse.quote(multi_repos)
+    return RedirectResponse(
+        url=f"/?message={message}&default_multi_repos={repos_q}",
+        status_code=303,
+    )
 
 
 def main() -> None:

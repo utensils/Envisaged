@@ -48,7 +48,7 @@
               class="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm hover:bg-zinc-800">Search</button>
           </div>
           <div id="gh-results" class="mt-2 space-y-2"></div>
-          <p class="mt-2 text-xs text-zinc-500">Tap a result to auto-fill single-repo mode. Repos are cloned/updated in <code>/tmp/envisaged-web-repos</code>.</p>
+          <p class="mt-2 text-xs text-zinc-500">Pick result action to set single repo or add to multi list. Repos are cloned/updated in <code>/tmp/envisaged-web-repos</code>.</p>
         </div>
 
         <form id="render-form" action="/render" method="post" class="space-y-4" autocomplete="off">
@@ -81,10 +81,17 @@
               <input id="repo-input" name="repo" value="." class="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm" />
             </label>
             <label id="multi-group" class="block">
-              <span class="mb-1 block text-xs uppercase tracking-wide text-zinc-500">Multi dir</span>
+              <span class="mb-1 block text-xs uppercase tracking-wide text-zinc-500">Fallback multi dir</span>
               <input name="multi_dir" value="{{ default_multi_dir }}" class="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm" />
             </label>
           </div>
+
+          <label id="multi-repos-group" class="block">
+            <span class="mb-1 block text-xs uppercase tracking-wide text-zinc-500">Multi repos (one per line)</span>
+            <textarea id="multi-repos" name="multi_repos" rows="5" placeholder="owner/repo\nhttps://github.com/org/repo.git\n/path/to/local/repo"
+              class="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm">{{ default_multi_repos }}</textarea>
+            <span class="mt-1 block text-xs text-zinc-500">If provided, these repos are used (cloned/updated locally in /tmp) and rendered together.</span>
+          </label>
 
           <div class="grid grid-cols-3 gap-3">
             <label class="block">
@@ -156,12 +163,15 @@
       const repoGroup = document.getElementById('repo-group');
       const multiGroup = document.getElementById('multi-group');
       const repoInput = document.getElementById('repo-input');
+      const multiReposEl = document.getElementById('multi-repos');
+      const multiReposGroup = document.getElementById('multi-repos-group');
       const refreshBtn = document.getElementById('refresh-btn');
 
       function updateModeVisibility() {
         const single = modeEl.value === 'single';
         repoGroup.classList.toggle('opacity-50', !single);
         multiGroup.classList.toggle('opacity-50', single);
+        multiReposGroup.classList.toggle('opacity-50', single);
       }
 
       modeEl.addEventListener('change', updateModeVisibility);
@@ -174,6 +184,17 @@
       const resultsEl = document.getElementById('gh-results');
       let searchTimer = null;
 
+      function addRepoToMultiList(fullName) {
+        const existing = multiReposEl.value
+          .split(/\n+/)
+          .map((v) => v.trim())
+          .filter(Boolean);
+        if (!existing.includes(fullName)) {
+          existing.push(fullName);
+          multiReposEl.value = existing.join('\n');
+        }
+      }
+
       function renderResults(results) {
         resultsEl.innerHTML = '';
         if (!results.length) {
@@ -182,23 +203,33 @@
         }
 
         for (const repo of results) {
-          const btn = document.createElement('button');
-          btn.type = 'button';
-          btn.className = 'block w-full rounded-lg border border-zinc-800 bg-zinc-950/80 p-2 text-left hover:border-zinc-700 hover:bg-zinc-900';
-          btn.innerHTML = `
+          const card = document.createElement('div');
+          card.className = 'rounded-lg border border-zinc-800 bg-zinc-950/80 p-2';
+          card.innerHTML = `
             <div class="flex items-center justify-between gap-2">
               <p class="text-sm font-semibold text-zinc-200 break-all">${repo.full_name}</p>
               <span class="text-xs text-zinc-500">★ ${repo.stars}</span>
             </div>
             <p class="mt-1 text-xs text-zinc-500 break-words">${repo.description || ''}</p>
+            <div class="mt-2 flex gap-2">
+              <button type="button" class="single-btn rounded border border-zinc-700 px-2 py-1 text-xs hover:bg-zinc-800">Use as single</button>
+              <button type="button" class="multi-btn rounded border border-zinc-700 px-2 py-1 text-xs hover:bg-zinc-800">Add to multi</button>
+            </div>
           `;
-          btn.addEventListener('click', () => {
+
+          card.querySelector('.single-btn').addEventListener('click', () => {
             repoInput.value = repo.full_name;
             modeEl.value = 'single';
             updateModeVisibility();
-            resultsEl.innerHTML = '';
           });
-          resultsEl.appendChild(btn);
+
+          card.querySelector('.multi-btn').addEventListener('click', () => {
+            addRepoToMultiList(repo.full_name);
+            modeEl.value = 'multi';
+            updateModeVisibility();
+          });
+
+          resultsEl.appendChild(card);
         }
       }
 
