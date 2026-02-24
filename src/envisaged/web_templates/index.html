@@ -16,6 +16,10 @@
         --text: #d7deef;
         --muted: #8d99b7;
       }
+      html, body {
+        max-width: 100%;
+        overflow-x: hidden;
+      }
       body {
         font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
         background: radial-gradient(1200px 700px at 20% -10%, rgba(124,58,237,0.15), transparent 45%), var(--bg);
@@ -41,7 +45,7 @@
   <body class="text-zinc-300 min-h-screen">
     <div class="noise"></div>
 
-    <main class="relative z-10 mx-auto max-w-5xl p-3 sm:p-6 lg:p-8 pb-24">
+    <main class="relative z-10 mx-auto w-full max-w-5xl p-3 sm:p-6 lg:p-8 pb-24 overflow-x-hidden">
       <header class="mb-5 rounded-2xl border border-indigo-900/70 bg-slate-950/70 p-4 sm:p-6">
         <p class="text-[11px] uppercase label-meta text-zinc-500">urandom-style render control</p>
         <h1 class="mt-2 text-2xl sm:text-3xl font-bold tracking-tight"><span class="gradient-text">Envisaged</span> Web</h1>
@@ -59,14 +63,14 @@
 
         <div class="mb-4 rounded-xl border border-zinc-800 bg-zinc-950/60 p-3">
           <label for="gh-query" class="mb-1 block text-[11px] uppercase label-meta text-zinc-500">GitHub repo search</label>
-          <div class="flex gap-2">
+          <div class="flex flex-col sm:flex-row gap-2">
             <input id="gh-query" placeholder="search repos (e.g. comfyui, pytorch, urandomio/site)"
-              class="form-input w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm" />
+              class="form-input min-w-0 w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm" />
             <button id="gh-search-btn" type="button"
               class="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm hover:bg-zinc-800">Search</button>
           </div>
           <div id="gh-results" class="mt-2 space-y-2"></div>
-          <p class="mt-2 text-xs text-zinc-500">Pick result action to set single repo or add to multi list. Repos are cloned/updated in <code>/tmp/envisaged-web-repos</code>.</p>
+          <p class="mt-2 text-xs text-zinc-500 break-words">Pick result action to set single repo or add to multi list. Repos are cloned/updated in <code class="break-all">/tmp/envisaged-web-repos</code>.</p>
         </div>
 
         <form id="render-form" action="/render" method="post" class="space-y-4" autocomplete="off">
