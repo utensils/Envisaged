@@ -166,8 +166,8 @@ TEMPLATES: dict[str, TemplateDef] = {
 }
 
 for omarchy_name, palette in OMARCHY_PALETTES.items():
-    TEMPLATES[f"omarchy-{omarchy_name}"] = TemplateDef(
-        f"omarchy-{omarchy_name}",
+    TEMPLATES[omarchy_name] = TemplateDef(
+        omarchy_name,
         "core",
         build_omarchy_filter(
             background=palette["background"],

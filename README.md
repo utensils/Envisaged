@@ -96,10 +96,10 @@ envisaged [OPTIONS] [REPO]
 
 - **Core:** `none`, `urandom` *(default)*, `border`, `neon`, `sunset`, `matrix`, `blueprint`, `noir`
 - **Omarchy core palettes:**
-  - `omarchy-catppuccin`, `omarchy-catppuccin-latte`, `omarchy-ethereal`, `omarchy-everforest`
-  - `omarchy-flexoki-light`, `omarchy-gruvbox`, `omarchy-hackerman`, `omarchy-kanagawa`
-  - `omarchy-matte-black`, `omarchy-miasma`, `omarchy-nord`, `omarchy-osaka-jade`
-  - `omarchy-ristretto`, `omarchy-rose-pine`, `omarchy-tokyo-night`, `omarchy-vantablack`, `omarchy-white`
+  - `catppuccin`, `catppuccin-latte`, `ethereal`, `everforest`
+  - `flexoki-light`, `gruvbox`, `hackerman`, `kanagawa`
+  - `matte-black`, `miasma`, `nord`, `osaka-jade`
+  - `ristretto`, `rose-pine`, `tokyo-night`, `vantablack`, `white`
 - **Compare:** `compare-panel`, `compare-neon`, `compare-blueprint`, `compare-matrix`, `compare-noir`
 - **Split:** `split-quad`, `split-vertical`, `split-triple`, `split-focus`, `split-matrix`
 - **Relationship:** `relation-panel`, `relation-neon`, `relation-blueprint`, `relation-noir`, `relation-sunset`
